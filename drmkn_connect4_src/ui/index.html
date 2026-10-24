@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect 4 · RL Lab</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d4ed8'/%3E%3Ccircle cx='11' cy='11' r='4' fill='%23ef4444'/%3E%3Ccircle cx='21' cy='11' r='4' fill='%23f5c518'/%3E%3Ccircle cx='11' cy='21' r='4' fill='%23f5c518'/%3E%3Ccircle cx='21' cy='21' r='4' fill='%23ef4444'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <i class="dot r"></i><i class="dot y"></i><i class="dot r"></i><i class="dot y"></i>
+    </div>
+    <div class="brand-text">
+      <h1>Connect 4 <span>RL Lab</span></h1>
+      <p>Chơi thử · đọc code song song · trace từng nước đi</p>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label class="field">
+      <span>Chế độ</span>
+      <select id="mode">
+        <option value="human-heuristic">Bạn vs Heuristic</option>
+        <option value="human-minimax">Bạn vs Minimax+ (depth 4)</option>
+        <option value="human-random">Bạn vs Random</option>
+        <option value="spectate-hm">Heuristic vs Minimax+</option>
+        <option value="spectate-mh">Minimax+ vs Heuristic</option>
+      </select>
+    </label>
+    <label class="switch" id="firstWrap">
+      <input type="checkbox" id="first" checked>
+      <span>Bạn đi trước</span>
+    </label>
+    <label class="switch">
+      <input type="checkbox" id="follow" checked>
+      <span>Bám theo code</span>
+    </label>
+    <button type="button" id="newgame" class="btn primary">Ván mới</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="panel play">
+    <div class="players" id="players"></div>
+
+    <div class="board-shell">
+      <div id="board" class="board"></div>
+      <div id="banner" class="banner hidden" role="status"></div>
+    </div>
+
+    <div class="statusrow">
+      <div id="status" class="status" role="status" aria-live="polite">Đang tải…</div>
+      <div class="reward" id="reward" title="Reward mà Connect4.step() trả về">reward <b>0</b></div>
+    </div>
+
+    <div class="trace-head">
+      <span>Trace lượt chơi</span>
+      <span class="hint">bấm một dòng để nhảy tới code</span>
+    </div>
+    <div class="steps" id="steps"></div>
+  </section>
+
+  <section class="panel explain">
+    <div class="pipeline" id="pipeline"></div>
+    <nav class="tabs" id="tabs" aria-label="Chọn file"></nav>
+
+    <div class="explain-grid">
+      <div class="code-wrap" id="codeWrap">
+        <div class="code" id="code"></div>
+      </div>
+      <aside class="notes">
+        <div class="note" id="note">
+          <div class="note-top"><span class="badge" id="noteBadge">GIẢI THÍCH</span></div>
+          <h2 id="noteTitle">Đang tải source…</h2>
+          <div class="note-body" id="noteBody"></div>
+          <div class="note-tags" id="noteTags"></div>
+        </div>
+        <div class="section-list-wrap">
+          <div class="section-list-head">
+            <span>Mục trong file</span>
+            <span id="fileMeta" class="file-meta"></span>
+          </div>
+          <div class="section-list" id="sections"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>Bản web port từ <code>connect4.py</code> · <code>heuristic.py</code> · <code>minimax.py</code></span>
+  <span id="loadState" class="loadstate">đang nạp source…</span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
