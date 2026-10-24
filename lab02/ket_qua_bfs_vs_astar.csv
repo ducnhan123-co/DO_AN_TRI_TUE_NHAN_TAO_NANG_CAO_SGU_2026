@@ -1,0 +1,13 @@
+Maze,Thuật toán,Path cost,Nút mở rộng,Max depth,Max frontier,Thời gian (ms)
+mê cung đang chọn (maze),BFS,16,152,16,17,0.79
+mê cung đang chọn (maze),A* Euclidean,16,63,16,27,0.44
+mê cung đang chọn (maze),A* Manhattan,16,41,16,29,0.31
+medium,BFS,68,270,68,9,1.07
+medium,A* Euclidean,68,225,68,8,1.12
+medium,A* Manhattan,68,218,68,8,1.21
+large,BFS,210,622,210,8,2.47
+large,A* Euclidean,210,555,210,10,2.75
+large,A* Manhattan,210,543,210,12,2.63
+open,BFS,54,683,54,25,3.06
+open,A* Euclidean,54,517,54,51,2.93
+open,A* Manhattan,54,212,54,185,1.4
