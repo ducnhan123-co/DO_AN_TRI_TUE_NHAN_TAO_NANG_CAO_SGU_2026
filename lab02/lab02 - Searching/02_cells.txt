@@ -1,0 +1,338 @@
+=== Cell 1 (ec: 1) ===
+%run maze_helper.py
+%matplotlib inline
+%config InlineBackend.figure_format = 'retina'
+
+import numpy as np
+
+#f = open("small_maze.txt", "r")
+#f = open("medium_maze.txt", "r")
+#f = open("large_maze.txt", "r")    # this has only one solution!
+#f = open("open_maze.txt", "r")
+#f = open("empty_maze.txt", "r")
+#f = open("empty_maze_2.txt", "r")
+#f = open("loops_maze.txt", "r")
+f = open("L_maze.txt", "r")
+
+maze_str = f.read()
+maze = parse_maze(maze_str)
+
+# look at two positions in the maze
+print("Position(0,0):", maze[0, 0])
+print("Position(8,1):", maze[8, 1])
+
+show_maze(maze)
+--- stream ---
+Helper functions for the Maze Assignment by M. Hahsler
+Usage: 
+  import maze_helper as mh
+  mh.show_some_mazes()
+  
+Here is an example maze:
+
+XXXXXXXXXXXXXXXXXXXXXX
+X XX        X X      X
+X    XXXXXX X XXXXXX X
+XXXXXX     S  X      X
+X    X XXXXXX XX XXXXX
+X XXXX X         X   X
+X        XXX XXX   X X
+XXXXXXXXXX    XXXXXX X
+XG         XX        X
+XXXXXXXXXXXXXXXXXXXXXX
+
+The goal is at (np.int64(8), np.int64(1)).
+Position(0,0): X
+Position(8,1):  
+
+=== Cell 3 (ec: 2) ===
+# tree_search_solution.py has my actual implementation (not published)
+import tree_search_solution as ts
+
+
+# order in which we add new states to the frontier
+ts.set_order("NESW")
+#ts.set_order(random=True)
+--- stream ---
+Directions are checked in the order ['N', 'E', 'S', 'W']
+Directions are checked in the order ['N', 'E', 'S', 'W']
+
+=== Cell 6 (ec: 3) ===
+ts.set_order("NESW")
+#ts.set_order(random=True)
+
+%time result = ts.best_first_search(maze, strategy = "BFS", debug = False, vis = False)
+ts.show_path(maze, result)
+result['actions']
+--- stream ---
+Directions are checked in the order ['N', 'E', 'S', 'W']
+CPU times: user 1.77 ms, sys: 0 ns, total: 1.77 ms
+Wall time: 1.66 ms
+Path length: 16
+Reached squares: 151
+
+--- execute_result ---
+["['E',\n", " 'E',\n", " 'E',\n", " 'E',\n", " 'S',\n", " 'E',\n", " 'E',\n", " 'N',\n", " 'N',\n", " 'N',\n", " 'N',\n", " 'N',\n", " 'N',\n", " 'N',\n", " 'N',\n", " 'E']"]
+=== Cell 8 (ec: 4) ===
+# Note: DFS uses LIFO so the directions come from the stack in reverse order!
+
+# Can get stuck for empty maze since cycle checking is not string enough! 
+# I use a maximum number of tries and stop if the goal is not reached.
+ts.set_order("NESW")
+#ts.set_order("SENW")
+#ts.set_order("WSEN")
+#ts.set_order(random=True)
+
+%time result = ts.DFS(maze, vis = False, max_tries = 100000, debug_reached = True)
+
+#result
+ts.show_path(maze, result)
+if result['path'] is None:
+    print("No solution found!")
+--- stream ---
+Directions are checked in the order ['N', 'E', 'S', 'W']
+CPU times: user 2.36 ms, sys: 386 μs, total: 2.75 ms
+Wall time: 2.58 ms
+Path length: 122
+Reached squares: 145
+
+=== Cell 10 (ec: 5) ===
+#ts.set_order("NESW")
+ts.set_order("SENW")
+#ts.set_order("WSEN")
+#ts.set_order(random=True)
+
+%time result = ts.DFS(maze, vis = False, max_tries = 100000, debug_reached = True)
+
+#result
+ts.show_path(maze, result)
+if result['path'] is None:
+    print("No solution found!")
+--- stream ---
+Directions are checked in the order ['S', 'E', 'N', 'W']
+CPU times: user 544 μs, sys: 0 ns, total: 544 μs
+Wall time: 550 μs
+Path length: 26
+Reached squares: 53
+
+=== Cell 12 (ec: 6) ===
+ts.set_order(random = True)
+
+# run it multiple times to see the effect of randomization
+for _ in range(5):
+    %time result = ts.DFS(maze, check_cycle = False, max_tries = 100000, vis = False, debug_reached = True)
+
+    #result
+    ts.show_path(maze, result)
+    if result['path'] is None:
+        print("No solution found!")
+--- stream ---
+Directions are checked at every step in random order.
+CPU times: user 40 ms, sys: 0 ns, total: 40 ms
+Wall time: 52.4 ms
+Path length: 1550
+Reached squares: 125
+
+--- stream ---
+CPU times: user 7.77 ms, sys: 0 ns, total: 7.77 ms
+Wall time: 7.77 ms
+Path length: 482
+Reached squares: 119
+
+--- stream ---
+CPU times: user 2.74 ms, sys: 0 ns, total: 2.74 ms
+Wall time: 2.76 ms
+Path length: 188
+Reached squares: 102
+
+--- stream ---
+CPU times: user 6.04 ms, sys: 0 ns, total: 6.04 ms
+Wall time: 5.88 ms
+Path length: 300
+Reached squares: 121
+
+--- stream ---
+CPU times: user 12.6 ms, sys: 25 μs, total: 12.6 ms
+Wall time: 12.6 ms
+Path length: 666
+Reached squares: 138
+
+=== Cell 14 (ec: 7) ===
+ts.set_order(random = True)
+
+N = 100
+%time results = [ ts.DFS(maze, max_tries = 10000, vis = False) for _ in range(N) ]
+
+# check if we found a solution and display the best solution
+results = [ r for r in results if not r['path'] is None ]
+if len(results) > 0:
+    path_lengths = [ len(r['path'])-1 for r in results ]
+
+    print(f"Solutions have path_lengths of {path_lengths}")
+
+    result = results[ts.min_index(path_lengths)]
+    ts.show_path(maze, result)
+else:
+    print("No solution found!")
+--- stream ---
+Directions are checked at every step in random order.
+CPU times: user 185 ms, sys: 0 ns, total: 185 ms
+Wall time: 184 ms
+Solutions have path_lengths of [62, 64, 54, 54, 94, 50, 32, 42, 38, 38, 60, 86, 38, 58, 62, 42, 104, 58, 54, 36, 90, 66, 58, 74, 90, 52, 46, 60, 68, 86, 100, 84, 50, 66, 56, 64, 58, 76, 66, 42, 76, 70, 74, 42, 102, 68, 80, 64, 76, 66, 46, 66, 70, 36, 56, 54, 66, 48, 98, 40, 108, 52, 78, 52, 66, 64, 30, 72, 72, 56, 98, 60, 48, 84, 52, 78, 80, 42, 64, 92, 112, 58, 50, 76, 70, 46, 58, 82, 74, 52, 110, 58, 44, 86, 58, 66, 38, 74, 30, 56]
+Path length: 30
+Reached squares: 0
+
+=== Cell 16 (ec: 8) ===
+ts.set_order(random = True)
+
+%time result = ts.DFS(maze, limit = 5, frontier_option = 2, max_tries = 100000, vis = False, debug_reached = True)
+ts.show_path(maze, result)
+--- stream ---
+Directions are checked at every step in random order.
+CPU times: user 1.97 ms, sys: 0 ns, total: 1.97 ms
+Wall time: 1.98 ms
+Reached squares: 57
+
+=== Cell 18 (ec: 9) ===
+ts.set_order(random = True)
+
+%time result = ts.IDS(maze, frontier_option = 2, max_tries = 100000)
+ts.show_path(maze, result)
+--- stream ---
+Directions are checked at every step in random order.
+CPU times: user 2.55 s, sys: 17.8 ms, total: 2.57 s
+Wall time: 2.57 s
+Path length: 16
+Reached squares: 0
+
+=== Cell 20 (ec: 10) ===
+# set the heuristic to Manhattan distance
+ts.heuristic = ts.manhattan
+=== Cell 21 (ec: 11) ===
+ts.set_order(random=True)
+
+%time result = ts.best_first_search(maze, strategy = "GBFS", debug = False, vis = False)
+ts.show_path(maze, result)
+--- stream ---
+Directions are checked at every step in random order.
+CPU times: user 1.21 ms, sys: 119 μs, total: 1.33 ms
+Wall time: 1.33 ms
+Path length: 22
+Reached squares: 61
+
+=== Cell 23 (ec: 12) ===
+ts.set_order(random=True)
+
+%time result = ts.best_first_search(maze, strategy = "A*", debug = False, vis = False)
+ts.show_path(maze, result)
+--- stream ---
+Directions are checked at every step in random order.
+CPU times: user 1.49 ms, sys: 144 μs, total: 1.63 ms
+Wall time: 1.63 ms
+Path length: 16
+Reached squares: 67
+
+=== Cell 26 (ec: 13) ===
+ts.set_order(random=True)
+
+%time result = ts.best_first_search(maze, strategy = "A*", W = 1+1e-9, debug = False, vis = False)
+ts.show_path(maze, result)
+--- stream ---
+Directions are checked at every step in random order.
+CPU times: user 1.6 ms, sys: 154 μs, total: 1.75 ms
+Wall time: 1.75 ms
+Path length: 16
+Reached squares: 61
+
+=== Cell 27 (ec: 14) ===
+%time result = ts.best_first_search(maze, strategy = "A*", W = 5, debug = False, vis = False)
+ts.show_path(maze, result)
+--- stream ---
+CPU times: user 1.85 ms, sys: 179 μs, total: 2.03 ms
+Wall time: 2.07 ms
+Path length: 18
+Reached squares: 59
+
+=== Cell 28 (ec: 15) ===
+%time result = ts.best_first_search(maze, strategy = "A*", W = 1000, debug = False, vis = False)
+ts.show_path(maze, result)
+--- stream ---
+CPU times: user 1.33 ms, sys: 0 ns, total: 1.33 ms
+Wall time: 1.35 ms
+Path length: 16
+Reached squares: 56
+
+=== Cell 30 (ec: 16) ===
+%time result = ts.best_first_search(maze, strategy = "A*", W = .7, debug = False, vis = False)
+ts.show_path(maze, result)
+--- stream ---
+CPU times: user 13.1 ms, sys: 87 μs, total: 13.2 ms
+Wall time: 12.1 ms
+Path length: 16
+Reached squares: 113
+
+=== Cell 31 (ec: 17) ===
+%time result = ts.best_first_search(maze, strategy = "A*", W = .0001, debug = False, vis = False)
+ts.show_path(maze, result)
+--- stream ---
+CPU times: user 12.4 ms, sys: 14 μs, total: 12.4 ms
+Wall time: 12.2 ms
+Path length: 16
+Reached squares: 150
+
+=== Cell 33 (ec: 18) ===
+#f = open("small_maze.txt", "r")
+#f = open("medium_maze.txt", "r")
+f = open("large_maze.txt", "r")    # this has only one solution!
+#f = open("open_maze.txt", "r")
+#f = open("empty_maze.txt", "r")
+#f = open("empty_maze_2.txt", "r")
+#f = open("L_maze.txt", "r")
+#f = open("loops_maze.txt", "r")
+
+maze_str = f.read()
+maze = parse_maze(maze_str)
+
+ts.show_maze(maze)
+
+ts.set_order(random=True)
+
+--- stream ---
+Directions are checked at every step in random order.
+
+=== Cell 34 (ec: 22) ===
+import timeit
+import math
+
+reps = 10
+
+times = {}
+
+algorithms = ["BFS", "DFS", "GBFS", "A*"]
+
+### FIXME: add IDS
+
+for a in algorithms:
+    times[a] = math.ceil(timeit.timeit(stmt = f'ts.best_first_search(maze, strategy = "{a}", debug = False, vis = False)', 
+              setup = 'from __main__ import ts, maze',
+                    number = reps)*1e6/reps)
+    
+times['DFS(no reached)'] = math.ceil(timeit.timeit(stmt = f'ts.DFS(maze, vis = False)', 
+              setup = 'from __main__ import ts, maze',
+                    number = reps)*1e6/reps)
+
+times['IDS'] = math.ceil(timeit.timeit(stmt = f'ts.IDS(maze, vis = False)', 
+              setup = 'from __main__ import ts, maze',
+                    number = reps)*1e6/reps)
+=== Cell 35 (ec: 23) ===
+import pandas as pd
+df = pd.DataFrame(times, index = ["time in micro seconds"])
+df
+--- execute_result ---
+['                        BFS   DFS   GBFS     A*  DFS(no reached)      IDS\n', 'time in micro seconds  8128  3758  10072  11679             9134  1129534']
+=== Cell 36 (ec: 24) ===
+import matplotlib.pyplot as plt
+
+plt.bar(df.columns, height = df.iloc[0])
+plt.ylabel("run time in micro seconds")
+plt.show()
