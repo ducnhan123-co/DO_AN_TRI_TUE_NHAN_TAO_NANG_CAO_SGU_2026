@@ -6,21 +6,28 @@ Quy ước
 * Mỗi cột dùng 7 bit (6 ô + 1 bit đệm phía trên) -> bit = col * 7 + row_from_bottom.
   Bit đệm luôn = 0 nên các phép dịch bit không bao giờ "nối" nhầm giữa hai cột.
 * "me" / "opp" là bitboard quân của người sắp đi / người còn lại (góc nhìn của người đi).
-* Mọi Player có hàm  act(me, opp) -> cột (0..6).
+* Mọi Player có hàm  act(me, opp) -> cột (0..COLS-1).
 * Khi chuyển sang mảng numpy (obs / grid) thì hàng 0 là hàng TRÊN CÙNG (giống code cũ).
 """
 from __future__ import annotations
 
+import os
+
 import numpy as np
 
-ROWS, COLS = 6, 7
+# Kích thước bàn: mặc định 8 hàng x 9 cột. Đặt biến môi trường C4_ROWS / C4_COLS để đổi
+# (vd C4_ROWS=6 C4_COLS=7 là bàn cổ điển). Model train ở kích thước nào phải dùng đúng kích thước đó.
+ROWS = int(os.environ.get("C4_ROWS", 8))
+COLS = int(os.environ.get("C4_COLS", 9))
 H = ROWS + 1
-COL_ORDER = (3, 2, 4, 1, 5, 0, 6)  # ưu tiên cột giữa -> alpha-beta cắt tỉa tốt hơn
+NBYTES = (H * COLS + 7) // 8
+# ưu tiên cột giữa -> alpha-beta cắt tỉa tốt hơn
+COL_ORDER = tuple(sorted(range(COLS), key=lambda c: (abs(c - (COLS - 1) / 2), c)))
 
 BOT = [1 << (c * H) for c in range(COLS)]
 COLMASK = [((1 << ROWS) - 1) << (c * H) for c in range(COLS)]
 BOARD_MASK = sum(COLMASK)
-CENTER = COLMASK[3]
+CENTER = COLMASK[COLS // 2]
 
 # chỉ số bit của từng ô theo toạ độ numpy (hàng 0 = trên cùng)
 _IDX = np.array(
@@ -62,11 +69,13 @@ def is_full(mask: int) -> bool:
 
 # --------------------------------------------------------------------------- chuyển đổi
 def to_plane(bb: int) -> np.ndarray:
-    return (np.right_shift(bb, _IDX) & 1).astype(np.float32)
+    # bitboard có thể > 64 bit (bàn lớn) nên đi qua bytes thay vì numpy int64
+    bits = np.unpackbits(np.frombuffer(bb.to_bytes(NBYTES, "little"), dtype=np.uint8), bitorder="little")
+    return bits[_IDX].astype(np.float32)
 
 
 def encode(me: int, opp: int) -> np.ndarray:
-    """Quan sát (2, 6, 7): kênh 0 = quân của người đi, kênh 1 = quân đối thủ.
+    """Quan sát (2, ROWS, COLS): kênh 0 = quân của người đi, kênh 1 = quân đối thủ.
     Biểu diễn theo góc nhìn người đi => agent không cần biết mình là quân 1 hay 2."""
     return np.stack([to_plane(me), to_plane(opp)])
 
@@ -248,7 +257,8 @@ class TacticalPlayer:
         if o is not None:
             return o
         cols = safe_cols(me, opp) or legal_cols(mask)
-        w = np.array([4 - abs(3 - c) for c in cols], dtype=float)
+        mid = (COLS - 1) / 2
+        w = np.array([COLS // 2 + 1 - abs(mid - c) for c in cols], dtype=float)
         return int(cols[self.rng.choice(len(cols), p=w / w.sum())])
 
 

@@ -2,7 +2,7 @@
 c4env.py - Môi trường huấn luyện Connect 4 (self-play + bể đối thủ) cho MaskablePPO.
 
 So với env cũ:
-  * Quan sát TƯƠNG ĐỐI: kênh 0 = quân của mình, kênh 1 = quân đối thủ  (2x6x7, float32).
+  * Quan sát TƯƠNG ĐỐI: kênh 0 = quân của mình, kênh 1 = quân đối thủ  (2xROWSxCOLS, float32).
     -> không còn phụ thuộc mình là quân 1 hay 2, và mạng chỉ cần học MỘT bài toán thay vì hai.
   * Action masking (action_masks()) -> không còn nước phạm quy, không cần phạt -100.
   * Reward sạch, đối xứng: thắng +1 / thua -1 / hoà 0 (không còn hoà = +1 hay -1 tuỳ ai đi cuối).

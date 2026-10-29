@@ -21,7 +21,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-from c4core import MinimaxPlayer, RandomPlayer, TacticalPlayer, match
+from c4core import ROWS, COLS, MinimaxPlayer, RandomPlayer, TacticalPlayer, match
 from c4env import Connect4Env, OpponentMixture, TorchPlayer
 
 
@@ -43,7 +43,7 @@ class C4Extractor(BaseFeaturesExtractor):
         super().__init__(observation_space, features_dim)
         self.stem = nn.Sequential(nn.Conv2d(2, channels, 3, padding=1), nn.ReLU())
         self.blocks = nn.Sequential(*[_Res(channels) for _ in range(n_res)])
-        self.head = nn.Sequential(nn.Flatten(), nn.Linear(channels * 6 * 7, features_dim), nn.ReLU())
+        self.head = nn.Sequential(nn.Flatten(), nn.Linear(channels * ROWS * COLS, features_dim), nn.ReLU())
 
     def forward(self, x):
         return self.head(self.blocks(self.stem(x)))
