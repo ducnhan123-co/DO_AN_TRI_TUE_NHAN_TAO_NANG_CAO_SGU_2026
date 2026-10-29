@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect Four AI Lab</title>
+<style>
+:root {
+  --bg: #f4f5f7; --panel: #ffffff; --ink: #1c2230; --muted: #667085; --line: #e3e6ec;
+  --board: #2447a6; --board-edge: #1a3680; --hole: #e9edf7;
+  --p1: #e5484d; --p1-dark: #b8353a; --p2: #f6c33b; --p2-dark: #c99a14;
+  --accent: #2447a6; --accent-ink: #ffffff; --good: #1f8f5f; --warn: #b4531a;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 14px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151f; --panel: #1a2030; --ink: #e8ebf3; --muted: #97a0b4; --line: #2a3246;
+    --board: #2f58c9; --board-edge: #223f94; --hole: #121828;
+    --accent: #6f93ff; --accent-ink: #0d1530; --good: #4cc38a; --warn: #f0985a;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151f; --panel: #1a2030; --ink: #e8ebf3; --muted: #97a0b4; --line: #2a3246;
+  --board: #2f58c9; --board-edge: #223f94; --hole: #121828;
+  --accent: #6f93ff; --accent-ink: #0d1530; --good: #4cc38a; --warn: #f0985a;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel); }
+header h1 { font-size: 18px; margin: 0; letter-spacing: -.01em; }
+header .sub { color: var(--muted); font-size: 13px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px;
+  max-width: 1120px; margin: 0 auto; padding: 20px 16px 40px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+.stage { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+#banner { min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 8px 16px;
+  border-radius: 999px; background: var(--panel); box-shadow: var(--shadow); font-weight: 600; }
+#banner .chip { width: 18px; height: 18px; border-radius: 50%; }
+#banner.win { background: var(--good); color: #fff; }
+#banner.draw { background: var(--warn); color: #fff; }
+#banner .spin { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.board-wrap { width: min(92vw, 560px); }
+#board { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; padding: 10px;
+  background: var(--board); border-radius: 18px; box-shadow: var(--shadow), inset 0 -5px 0 var(--board-edge); }
+.col { appearance: none; border: 0; background: transparent; padding: 0; margin: 0; cursor: default;
+  display: flex; flex-direction: column; border-radius: 12px; }
+.col.playable { cursor: pointer; }
+.col.playable:hover { background: rgba(255,255,255,.10); }
+.col:focus-visible { outline: 3px solid var(--p2); outline-offset: -2px; }
+.cell { aspect-ratio: 1; padding: 5%; position: relative; }
+.disc { width: 100%; height: 100%; border-radius: 50%; background: var(--hole);
+  box-shadow: inset 0 3px 6px rgba(0,0,0,.35); position: relative; }
+.disc.p1 { background: radial-gradient(circle at 35% 30%, #ff7a7e, var(--p1) 55%, var(--p1-dark)); box-shadow: inset 0 -3px 5px rgba(0,0,0,.25); }
+.disc.p2 { background: radial-gradient(circle at 35% 30%, #ffe27a, var(--p2) 55%, var(--p2-dark)); box-shadow: inset 0 -3px 5px rgba(0,0,0,.2); }
+.disc.ghost.p1 { background: var(--p1); opacity: .35; box-shadow: none; }
+.disc.ghost.p2 { background: var(--p2); opacity: .45; box-shadow: none; }
+.disc.drop { animation: drop var(--drop-ms, 420ms) cubic-bezier(.3,.0,.6,1) both; }
+@keyframes drop { from { transform: translateY(calc(var(--drop-rows) * -108%)); } 60% { transform: translateY(0); }
+  78% { transform: translateY(-9%); } to { transform: translateY(0); } }
+.disc.last::after { content: ""; position: absolute; inset: 32%; border-radius: 50%; border: 3px solid rgba(255,255,255,.75); }
+.disc.winc { animation: pulse 1s ease-in-out infinite; outline: 4px solid #fff; outline-offset: -2px; }
+@keyframes pulse { 50% { transform: scale(.88); } }
+@media (prefers-reduced-motion: reduce) { .disc.drop, .disc.winc, #banner .spin { animation: none; } }
+
+.colnums { display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 10px; width: 100%; color: var(--muted);
+  font-size: 12px; text-align: center; margin-top: -4px; }
+#visits { display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 10px; width: 100%; height: 64px; align-items: end; gap: 0; }
+#visits:empty { display: none; }
+#visits .vb { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 11px; color: var(--muted); }
+#visits .bar { width: 46%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; }
+#visits .best .bar { background: var(--good); }
+.hint { color: var(--muted); font-size: 12.5px; text-align: center; max-width: 560px; }
+
+aside { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--panel); border-radius: 14px; padding: 14px 16px; box-shadow: var(--shadow); }
+.card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+.player { display: grid; grid-template-columns: 22px 1fr; gap: 8px 10px; align-items: center; padding: 8px 0; }
+.player + .player { border-top: 1px solid var(--line); }
+.player .chip { width: 22px; height: 22px; border-radius: 50%; }
+.player .params { grid-column: 2; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.player .params:empty { display: none; }
+select, input[type=number] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 8px; width: 100%; }
+input[type=number] { width: 90px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+button.btn { font: inherit; font-weight: 600; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  padding: 8px 12px; border-radius: 10px; cursor: pointer; }
+button.btn:hover { border-color: var(--accent); }
+button.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+button.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.btn:disabled { opacity: .45; cursor: not-allowed; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row > * { flex: 1 1 auto; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.presets button { flex: 1 1 auto; font-size: 13px; padding: 6px 8px; }
+.speed { display: flex; align-items: center; gap: 10px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+#analysis { font-size: 14px; }
+#analysis .k { color: var(--muted); }
+#analysis .big { font-weight: 700; font-size: 16px; }
+#history { display: flex; flex-wrap: wrap; gap: 4px; max-height: 120px; overflow: auto; font-size: 12.5px; }
+#history span { padding: 2px 7px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
+#history .m1 { border-left: 4px solid var(--p1); } #history .m2 { border-left: 4px solid var(--p2); }
+#err { color: var(--warn); font-size: 13px; min-height: 18px; }
+button.theme { color: var(--muted); cursor: pointer; font: inherit; font-size: 13px; background: var(--bg);
+  border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; white-space: nowrap; }
+button.theme:hover { border-color: var(--accent); color: var(--ink); }
+.speed label, .speed span { white-space: nowrap; }
+.speed span { min-width: 3.2em; text-align: right; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Connect Four AI Lab</h1>
+    <div class="sub">Cấp 1 Random · 2 Heuristic · 3 Alpha-Beta · 4 MCTS-UCT — chạy bằng chính code Python của đồ án</div>
+  </div>
+  <button class="theme" id="theme" type="button">Đổi giao diện sáng/tối</button>
+</header>
+
+<div class="layout">
+  <section class="stage" aria-label="Bàn cờ">
+    <div id="banner" role="status" aria-live="polite"></div>
+    <div class="board-wrap">
+      <div id="board" role="group" aria-label="Bàn Connect Four 7 cột"></div>
+      <div class="colnums" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span></div>
+    </div>
+    <div class="board-wrap"><div id="visits" aria-label="Phân bố lượt thăm của MCTS"></div></div>
+    <div class="hint">Nhấn vào cột hoặc phím <b>1–7</b> để thả quân. Cột hiển thị 1–7 (trong code/log là 0–6).</div>
+  </section>
+
+  <aside>
+    <div class="card">
+      <h2>Người chơi</h2>
+      <div class="presets">
+        <button class="btn" data-preset="hm" type="button">Bạn vs MCTS</button>
+        <button class="btn" data-preset="ha" type="button">Bạn vs Alpha-Beta</button>
+        <button class="btn" data-preset="am" type="button">Alpha-Beta vs MCTS</button>
+      </div>
+      <div class="player" id="pl1"><span class="chip" style="background:var(--p1)"></span>
+        <select id="type1" aria-label="Người chơi X (đi trước)"></select><div class="params" id="params1"></div></div>
+      <div class="player" id="pl2"><span class="chip" style="background:var(--p2)"></span>
+        <select id="type2" aria-label="Người chơi O (đi sau)"></select><div class="params" id="params2"></div></div>
+    </div>
+
+    <div class="card">
+      <h2>Điều khiển</h2>
+      <div class="row">
+        <button class="btn primary" id="new" type="button">Ván mới</button>
+        <button class="btn" id="undo" type="button">Hoàn tác</button>
+        <button class="btn" id="pause" type="button">Tạm dừng</button>
+      </div>
+      <div class="speed"><label for="speed">Tốc độ máy-máy</label>
+        <input id="speed" type="range" min="0" max="1500" step="100" value="500"><span id="speedv">0,5 s</span></div>
+      <div id="err" role="alert"></div>
+    </div>
+
+    <div class="card"><h2>Nước đi gần nhất của máy</h2><div id="analysis"><span class="k">Chưa có.</span></div></div>
+    <div class="card"><h2>Lịch sử nước đi</h2><div id="history"><span class="k">Chưa có nước nào.</span></div></div>
+  </aside>
+</div>
+
+<script>
+"use strict";
+const ROWS = 6, COLS = 7, WIN = 1000000;
+const TYPES = [["human", "Người chơi"], ["random", "Cấp 1 · Random"], ["heuristic", "Cấp 2 · Heuristic"],
+               ["alphabeta", "Cấp 3 · Alpha-Beta"], ["mcts", "Cấp 4 · MCTS-UCT"]];
+const NAME = { 1: "X (đỏ)", 2: "O (vàng)" };
+
+const S = {
+  moves: [], st: null, gen: 0, busy: false, paused: false, prevLen: 0, lastInfo: null,
+  cfg: { 1: { type: "human" }, 2: { type: "mcts", sims: 1000, depth: 5 } },
+};
+const $ = (id) => document.getElementById(id);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+                set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+async function api(path, body) {
+  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  let j = {}; try { j = await r.json(); } catch {}
+  if (!r.ok) throw new Error(j.error || ("Lỗi " + r.status));
+  return j;
+}
+const isHuman = (p) => S.cfg[p].type === "human";
+const anyHuman = () => isHuman(1) || isHuman(2);
+const showErr = (m) => { $("err").textContent = m || ""; };
+
+/* ---------- cấu hình người chơi ---------- */
+function buildPlayerUI(p) {
+  const sel = $("type" + p);
+  sel.innerHTML = TYPES.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+  sel.value = S.cfg[p].type;
+  sel.onchange = () => { S.cfg[p].type = sel.value; renderParams(p); persist(); render(); kick(); };
+  renderParams(p);
+}
+function renderParams(p) {
+  const c = S.cfg[p], el = $("params" + p);
+  if (c.type === "alphabeta") {
+    el.innerHTML = `<label for="d${p}">Độ sâu</label><input id="d${p}" type="number" min="1" max="9" value="${c.depth ?? 5}">`;
+    $("d" + p).onchange = (e) => { c.depth = clamp(+e.target.value || 5, 1, 9); e.target.value = c.depth; persist(); };
+  } else if (c.type === "mcts") {
+    el.innerHTML = `<label for="s${p}">Mô phỏng</label><input id="s${p}" type="number" min="10" max="20000" step="100" value="${c.sims ?? 1000}">`;
+    $("s" + p).onchange = (e) => { c.sims = clamp(+e.target.value || 1000, 10, 20000); e.target.value = c.sims; persist(); };
+  } else el.innerHTML = "";
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function persist() { store.set("c4cfg", JSON.stringify(S.cfg)); }
+const PRESETS = {
+  hm: { 1: { type: "human" }, 2: { type: "mcts", sims: 1000, depth: 5 } },
+  ha: { 1: { type: "human" }, 2: { type: "alphabeta", sims: 1000, depth: 5 } },
+  am: { 1: { type: "alphabeta", sims: 1000, depth: 5 }, 2: { type: "mcts", sims: 1000, depth: 5 } },
+};
+
+/* ---------- vẽ bàn cờ ---------- */
+function buildBoard() {
+  const b = $("board"); b.innerHTML = "";
+  for (let c = 0; c < COLS; c++) {
+    const col = document.createElement("button");
+    col.type = "button"; col.className = "col"; col.dataset.c = c; col.setAttribute("aria-label", `Cột ${c + 1}`);
+    for (let r = 0; r < ROWS; r++) {
+      const cell = document.createElement("div"); cell.className = "cell";
+      cell.innerHTML = '<div class="disc"></div>'; col.appendChild(cell);
+    }
+    col.onclick = () => humanMove(c);
+    col.onmouseenter = () => ghost(c);
+    col.onmouseleave = () => ghost(-1);
+    col.onfocus = () => ghost(c);
+    col.onblur = () => ghost(-1);
+    b.appendChild(col);
+  }
+}
+function discAt(r, c) { return $("board").children[c].children[r].firstChild; }
+function canHuman() { const s = S.st; return s && !s.over && !S.busy && isHuman(s.to_move); }
+
+function ghost(c) {
+  document.querySelectorAll(".disc.ghost").forEach((d) => { d.className = "disc"; });
+  if (c < 0 || !canHuman() || !S.st.legal.includes(c)) return;
+  for (let r = ROWS - 1; r >= 0; r--) if (!S.st.grid[r][c]) { discAt(r, c).className = "disc ghost p" + S.st.to_move; break; }
+}
+
+function render() {
+  const s = S.st; if (!s) return;
+  const last = S.moves.length ? S.moves[S.moves.length - 1] : -1;
+  let lastRow = -1;
+  if (last >= 0) for (let r = 0; r < ROWS; r++) if (s.grid[r][last]) { lastRow = r; break; }
+  const win = new Set(s.win_cells.map(([r, c]) => r * COLS + c));
+  const fresh = S.moves.length === S.prevLen + 1;  // vừa thêm đúng 1 quân -> hiệu ứng rơi
+  for (let c = 0; c < COLS; c++) {
+    const col = $("board").children[c];
+    col.classList.toggle("playable", canHuman() && s.legal.includes(c));
+    col.disabled = !(canHuman() && s.legal.includes(c));
+    for (let r = 0; r < ROWS; r++) {
+      const v = s.grid[r][c], d = discAt(r, c);
+      let cls = "disc" + (v ? " p" + v : "");
+      if (win.has(r * COLS + c)) cls += " winc";
+      else if (r === lastRow && c === last && !s.over) cls += " last";
+      if (fresh && r === lastRow && c === last) { cls += " drop"; d.style.setProperty("--drop-rows", String(r + 1)); }
+      d.className = cls;
+    }
+  }
+  S.prevLen = S.moves.length;
+  renderBanner(); renderHistory(); renderAnalysis(); renderButtons();
+}
+
+function renderBanner() {
+  const s = S.st, b = $("banner"); b.className = ""; b.innerHTML = "";
+  if (s.over) {
+    if (s.winner) { b.className = "win"; b.textContent = `${NAME[s.winner]} thắng!` + (anyHuman() ? (isHuman(s.winner) ? " 🎉" : "") : ""); }
+    else { b.className = "draw"; b.textContent = "Hòa"; }
+    return;
+  }
+  const p = s.to_move, chip = `<span class="chip" style="background:var(--p${p})"></span>`;
+  if (isHuman(p)) b.innerHTML = `${chip}Lượt của bạn — ${NAME[p]}`;
+  else if (S.paused) b.innerHTML = `${chip}Tạm dừng — tiếp theo: ${typeLabel(p)}`;
+  else b.innerHTML = `${chip}<span class="spin"></span>${typeLabel(p)} đang nghĩ…`;
+}
+function typeLabel(p) { return (TYPES.find((t) => t[0] === S.cfg[p].type) || [0, "?"])[1]; }
+
+function renderHistory() {
+  const h = $("history");
+  if (!S.moves.length) { h.innerHTML = '<span class="k">Chưa có nước nào.</span>'; return; }
+  h.innerHTML = S.moves.map((m, i) => `<span class="m${(i % 2) + 1}">${i + 1}. ${m + 1}</span>`).join("");
+  h.scrollTop = h.scrollHeight;
+}
+
+function renderAnalysis() {
+  const a = $("analysis"), v = $("visits"), i = S.lastInfo;
+  v.innerHTML = "";
+  if (!i) { a.innerHTML = '<span class="k">Chưa có.</span>'; return; }
+  const st = i.stats, lines = [`<div class="big">${i.name}</div>`,
+    `<div><span class="k">Chọn cột</span> <b>${i.action + 1}</b> · <span class="k">thời gian</span> ${i.ms.toFixed(1)} ms</div>`];
+  if (st.sims) {
+    lines.push(`<div><span class="k">Mô phỏng</span> ${st.sims} · <span class="k">nút cây</span> ${st.nodes} · <span class="k">độ sâu cây</span> ${st.depth}</div>`);
+    if (st.win_rate !== undefined) lines.push(`<div><span class="k">Tỷ lệ thắng ước lượng của nước chọn</span> ${(st.win_rate * 100).toFixed(1)}%</div>`);
+  } else if (st.nodes) {
+    lines.push(`<div><span class="k">Nút duyệt</span> ${st.nodes.toLocaleString("vi-VN")} · <span class="k">độ sâu</span> ${st.depth}</div>`);
+    if (st.value !== undefined) {
+      const val = st.value;
+      if (val >= WIN - 100) lines.push(`<div style="color:var(--good)">Thấy chuỗi thắng cưỡng bức sau ${WIN - val} nước (tính cả hai bên)</div>`);
+      else if (val <= -(WIN - 100)) lines.push(`<div style="color:var(--warn)">Thấy mình sẽ thua sau ${WIN + val} nước nếu đối thủ chơi tối ưu</div>`);
+      else lines.push(`<div><span class="k">Điểm đánh giá</span> ${val}</div>`);
+    }
+  }
+  a.innerHTML = lines.join("");
+  if (st.visits) {
+    const tot = Object.values(st.visits).reduce((x, y) => x + y, 0), mx = Math.max(...Object.values(st.visits));
+    for (let c = 0; c < COLS; c++) {
+      const n = st.visits[c] || 0;
+      v.insertAdjacentHTML("beforeend", `<div class="vb ${c === i.action ? "best" : ""}"><span>${tot ? Math.round((100 * n) / tot) : 0}%</span><div class="bar" style="height:${mx ? (n / mx) * 40 : 0}px"></div></div>`);
+    }
+  }
+}
+
+function renderButtons() {
+  const aiOnly = !anyHuman();
+  $("undo").disabled = !S.moves.length || (S.busy && false);
+  $("pause").style.display = aiOnly || S.paused ? "" : "none";
+  $("pause").textContent = S.paused ? "Tiếp tục" : "Tạm dừng";
+  $("speed").disabled = !aiOnly;
+}
+
+/* ---------- luồng ván cờ ---------- */
+async function refresh() {
+  try { S.st = await api("/api/state", { moves: S.moves }); showErr(""); }
+  catch (e) { showErr(e.message); return; }
+  render(); kick();
+}
+
+async function humanMove(c) {
+  if (!canHuman() || !S.st.legal.includes(c)) return;
+  S.moves.push(c); S.lastInfoKeep = true; ghost(-1);
+  await refresh();
+}
+
+async function kick() {
+  const s = S.st;
+  if (!s || s.over || S.busy || S.paused || isHuman(s.to_move)) return;
+  const gen = S.gen, p = s.to_move;
+  S.busy = true; render();
+  try {
+    if (!anyHuman()) await new Promise((r) => setTimeout(r, +$("speed").value));
+    if (gen !== S.gen) return;
+    const res = await api("/api/ai", { moves: S.moves, agent: S.cfg[p] });
+    if (gen !== S.gen) return;
+    S.lastInfo = res; S.moves.push(res.action);
+  } catch (e) { if (gen === S.gen) { showErr(e.message); S.paused = true; } return; }
+  finally { if (gen === S.gen) S.busy = false; }
+  await refresh();
+}
+
+function newGame() {
+  S.gen++; S.busy = false; S.moves = []; S.lastInfo = null; S.prevLen = 0; S.paused = false; showErr("");
+  refresh();
+}
+function undo() {
+  if (!S.moves.length) return;
+  S.gen++; S.busy = false; S.paused = !anyHuman() ? true : false;
+  S.moves.pop();
+  // với người chơi thật: lùi tiếp tới khi tới lượt người
+  while (anyHuman() && S.moves.length && !isHuman(S.moves.length % 2 === 0 ? 1 : 2)) S.moves.pop();
+  S.lastInfo = null; S.prevLen = S.moves.length; refresh();
+}
+
+/* ---------- khởi tạo ---------- */
+function boot() {
+  const saved = store.get("c4cfg");
+  if (saved) { try { const c = JSON.parse(saved); if (c[1] && c[2]) S.cfg = c; } catch {} }
+  const th = store.get("c4theme"); if (th) document.documentElement.dataset.theme = th;
+  buildBoard(); buildPlayerUI(1); buildPlayerUI(2);
+  document.querySelectorAll("[data-preset]").forEach((b) => b.onclick = () => {
+    const p = PRESETS[b.dataset.preset]; S.cfg = JSON.parse(JSON.stringify(p));
+    buildPlayerUI(1); buildPlayerUI(2); persist(); newGame();
+  });
+  $("new").onclick = newGame; $("undo").onclick = undo;
+  $("pause").onclick = () => { S.paused = !S.paused; render(); if (!S.paused) kick(); };
+  $("speed").oninput = () => { $("speedv").textContent = (+$("speed").value / 1000).toLocaleString("vi-VN") + " s"; };
+  $("speed").oninput();
+  $("theme").onclick = () => {
+    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+    const cur = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+    const nxt = cur === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = nxt; store.set("c4theme", nxt);
+  };
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.ctrlKey || e.metaKey) return;
+    if (e.key >= "1" && e.key <= "7") humanMove(+e.key - 1);
+  });
+  newGame();
+}
+boot();
+</script>
+</body>
+</html>

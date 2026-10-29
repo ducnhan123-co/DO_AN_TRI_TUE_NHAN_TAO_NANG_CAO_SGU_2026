@@ -1,0 +1,139 @@
+{
+ "A2": {
+  "AB d4 + eval vs AB d4 không eval": {
+   "n": 200,
+   "win": 139,
+   "draw": 21,
+   "loss": 40,
+   "score": 0.7475,
+   "wilson": [
+    0.6830123544244071,
+    0.8026588726460242
+   ],
+   "bootstrap": [
+    0.6925,
+    0.8
+   ],
+   "score_as_first": 0.74,
+   "score_as_second": 0.755,
+   "score_by_seed": {
+    "0": 0.755,
+    "1": 0.74
+   },
+   "p1_wins": 88,
+   "p2_wins": 91,
+   "draws": 21,
+   "avg_plies": 28.83,
+   "a_mean_ms": 1.1695989928236956,
+   "a_p95_ms": 3.424764249990631
+  },
+  "AB d4 + eval vs Heuristic": {
+   "n": 200,
+   "win": 139,
+   "draw": 10,
+   "loss": 51,
+   "score": 0.72,
+   "wilson": [
+    0.6540756858222899,
+    0.7776320715736488
+   ],
+   "bootstrap": [
+    0.66,
+    0.7775
+   ],
+   "score_as_first": 0.725,
+   "score_as_second": 0.715,
+   "score_by_seed": {
+    "0": 0.715,
+    "1": 0.725
+   },
+   "p1_wins": 96,
+   "p2_wins": 94,
+   "draws": 10,
+   "avg_plies": 27.08,
+   "a_mean_ms": 1.3898327676120898,
+   "a_p95_ms": 3.566360799999302
+  },
+  "AB d4 không eval vs Heuristic": {
+   "n": 200,
+   "win": 92,
+   "draw": 17,
+   "loss": 91,
+   "score": 0.5025,
+   "wilson": [
+    0.4338133489154735,
+    0.5710924210549347
+   ],
+   "bootstrap": [
+    0.435,
+    0.5675
+   ],
+   "score_as_first": 0.545,
+   "score_as_second": 0.46,
+   "score_by_seed": {
+    "0": 0.485,
+    "1": 0.52
+   },
+   "p1_wins": 100,
+   "p2_wins": 83,
+   "draws": 17,
+   "avg_plies": 27.9,
+   "a_mean_ms": 0.20841270125570324,
+   "a_p95_ms": 0.5352595500113467
+  },
+  "AB d4 + eval vs Random": {
+   "n": 200,
+   "win": 199,
+   "draw": 0,
+   "loss": 1,
+   "score": 0.995,
+   "wilson": [
+    0.9722256001302286,
+    0.999116854010634
+   ],
+   "bootstrap": [
+    0.985,
+    1.0
+   ],
+   "score_as_first": 1.0,
+   "score_as_second": 0.99,
+   "score_by_seed": {
+    "0": 0.99,
+    "1": 1.0
+   },
+   "p1_wins": 101,
+   "p2_wins": 99,
+   "draws": 0,
+   "avg_plies": 12.675,
+   "a_mean_ms": 1.93958722246436,
+   "a_p95_ms": 4.162242600000355
+  },
+  "AB d4 không eval vs Random": {
+   "n": 200,
+   "win": 200,
+   "draw": 0,
+   "loss": 0,
+   "score": 1.0,
+   "wilson": [
+    0.9811539940816791,
+    1.0
+   ],
+   "bootstrap": [
+    1.0,
+    1.0
+   ],
+   "score_as_first": 1.0,
+   "score_as_second": 1.0,
+   "score_by_seed": {
+    "0": 1.0,
+    "1": 1.0
+   },
+   "p1_wins": 100,
+   "p2_wins": 100,
+   "draws": 0,
+   "avg_plies": 13.18,
+   "a_mean_ms": 0.23130041425633488,
+   "a_p95_ms": 0.4150697500136857
+  }
+ }
+}

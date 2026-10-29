@@ -1,0 +1,436 @@
+{
+ "A3": {
+  "MCTS 25 vs Heuristic": {
+   "n": 200,
+   "win": 13,
+   "draw": 0,
+   "loss": 187,
+   "score": 0.065,
+   "wilson": [
+    0.03837598764975976,
+    0.10802003749917945
+   ],
+   "bootstrap": [
+    0.035,
+    0.1
+   ],
+   "score_as_first": 0.06,
+   "score_as_second": 0.07,
+   "score_by_seed": {
+    "0": 0.09,
+    "1": 0.04
+   },
+   "p1_wins": 99,
+   "p2_wins": 101,
+   "draws": 0,
+   "avg_plies": 14.945,
+   "a_mean_ms": 0.6137903396764001,
+   "a_p95_ms": 0.949763499988876
+  },
+  "MCTS 25 vs AB d4": {
+   "n": 200,
+   "win": 8,
+   "draw": 0,
+   "loss": 192,
+   "score": 0.04,
+   "wilson": [
+    0.02040538715065641,
+    0.07693293829419882
+   ],
+   "bootstrap": [
+    0.015,
+    0.07
+   ],
+   "score_as_first": 0.06,
+   "score_as_second": 0.02,
+   "score_by_seed": {
+    "0": 0.05,
+    "1": 0.03
+   },
+   "p1_wins": 104,
+   "p2_wins": 96,
+   "draws": 0,
+   "avg_plies": 15.28,
+   "a_mean_ms": 0.6934202975971895,
+   "a_p95_ms": 1.112816450009291
+  },
+  "MCTS 50 vs Heuristic": {
+   "n": 200,
+   "win": 25,
+   "draw": 1,
+   "loss": 174,
+   "score": 0.1275,
+   "wilson": [
+    0.08819754339499541,
+    0.1808427310141537
+   ],
+   "bootstrap": [
+    0.085,
+    0.175
+   ],
+   "score_as_first": 0.15,
+   "score_as_second": 0.105,
+   "score_by_seed": {
+    "0": 0.125,
+    "1": 0.13
+   },
+   "p1_wins": 104,
+   "p2_wins": 95,
+   "draws": 1,
+   "avg_plies": 16.94,
+   "a_mean_ms": 1.2263895306272377,
+   "a_p95_ms": 1.819322599988027
+  },
+  "MCTS 50 vs AB d4": {
+   "n": 200,
+   "win": 17,
+   "draw": 1,
+   "loss": 182,
+   "score": 0.0875,
+   "wilson": [
+    0.055711741530038536,
+    0.13483621335257623
+   ],
+   "bootstrap": [
+    0.05,
+    0.1275
+   ],
+   "score_as_first": 0.15,
+   "score_as_second": 0.025,
+   "score_by_seed": {
+    "0": 0.09,
+    "1": 0.085
+   },
+   "p1_wins": 112,
+   "p2_wins": 87,
+   "draws": 1,
+   "avg_plies": 17.5,
+   "a_mean_ms": 1.150206294880935,
+   "a_p95_ms": 1.7149756000321759
+  },
+  "MCTS 100 vs Heuristic": {
+   "n": 200,
+   "win": 44,
+   "draw": 3,
+   "loss": 153,
+   "score": 0.2275,
+   "wilson": [
+    0.1748562887039238,
+    0.2904147845215611
+   ],
+   "bootstrap": [
+    0.17,
+    0.285
+   ],
+   "score_as_first": 0.31,
+   "score_as_second": 0.145,
+   "score_by_seed": {
+    "0": 0.25,
+    "1": 0.205
+   },
+   "p1_wins": 115,
+   "p2_wins": 82,
+   "draws": 3,
+   "avg_plies": 21.205,
+   "a_mean_ms": 2.1004425505020423,
+   "a_p95_ms": 3.2814690000236624
+  },
+  "MCTS 100 vs AB d4": {
+   "n": 200,
+   "win": 30,
+   "draw": 3,
+   "loss": 167,
+   "score": 0.1575,
+   "wilson": [
+    0.1135324297691313,
+    0.21437708428491853
+   ],
+   "bootstrap": [
+    0.1075,
+    0.2125
+   ],
+   "score_as_first": 0.21,
+   "score_as_second": 0.105,
+   "score_by_seed": {
+    "0": 0.1,
+    "1": 0.215
+   },
+   "p1_wins": 109,
+   "p2_wins": 88,
+   "draws": 3,
+   "avg_plies": 21.305,
+   "a_mean_ms": 2.2407526503534743,
+   "a_p95_ms": 3.5716107500149974
+  },
+  "MCTS 250 vs Heuristic": {
+   "n": 200,
+   "win": 79,
+   "draw": 1,
+   "loss": 120,
+   "score": 0.3975,
+   "wilson": [
+    0.33222135810805664,
+    0.46664207310519923
+   ],
+   "bootstrap": [
+    0.33,
+    0.4625
+   ],
+   "score_as_first": 0.495,
+   "score_as_second": 0.3,
+   "score_by_seed": {
+    "0": 0.435,
+    "1": 0.36
+   },
+   "p1_wins": 119,
+   "p2_wins": 80,
+   "draws": 1,
+   "avg_plies": 23.845,
+   "a_mean_ms": 5.253712334346814,
+   "a_p95_ms": 8.671419949999404
+  },
+  "MCTS 250 vs AB d4": {
+   "n": 200,
+   "win": 55,
+   "draw": 5,
+   "loss": 140,
+   "score": 0.2875,
+   "wilson": [
+    0.22924303232362842,
+    0.353766520191658
+   ],
+   "bootstrap": [
+    0.225,
+    0.3475
+   ],
+   "score_as_first": 0.335,
+   "score_as_second": 0.24,
+   "score_by_seed": {
+    "0": 0.295,
+    "1": 0.28
+   },
+   "p1_wins": 107,
+   "p2_wins": 88,
+   "draws": 5,
+   "avg_plies": 25.865,
+   "a_mean_ms": 5.162409289607143,
+   "a_p95_ms": 8.61948480001047
+  },
+  "MCTS 500 vs Heuristic": {
+   "n": 200,
+   "win": 94,
+   "draw": 3,
+   "loss": 103,
+   "score": 0.4775,
+   "wilson": [
+    0.4093518797428128,
+    0.5464961905235117
+   ],
+   "bootstrap": [
+    0.41,
+    0.5525
+   ],
+   "score_as_first": 0.48,
+   "score_as_second": 0.475,
+   "score_by_seed": {
+    "0": 0.455,
+    "1": 0.5
+   },
+   "p1_wins": 99,
+   "p2_wins": 98,
+   "draws": 3,
+   "avg_plies": 26.475,
+   "a_mean_ms": 10.194889890917022,
+   "a_p95_ms": 18.033994000006714
+  },
+  "MCTS 500 vs AB d4": {
+   "n": 200,
+   "win": 73,
+   "draw": 5,
+   "loss": 122,
+   "score": 0.3775,
+   "wilson": [
+    0.31322017274394076,
+    0.44639709870604793
+   ],
+   "bootstrap": [
+    0.3125,
+    0.445
+   ],
+   "score_as_first": 0.44,
+   "score_as_second": 0.315,
+   "score_by_seed": {
+    "0": 0.335,
+    "1": 0.42
+   },
+   "p1_wins": 110,
+   "p2_wins": 85,
+   "draws": 5,
+   "avg_plies": 27.77,
+   "a_mean_ms": 10.245279747461987,
+   "a_p95_ms": 17.895150599986206
+  },
+  "MCTS 1000 vs Heuristic": {
+   "n": 200,
+   "win": 118,
+   "draw": 8,
+   "loss": 74,
+   "score": 0.61,
+   "wilson": [
+    0.5409361758928832,
+    0.6749177028050861
+   ],
+   "bootstrap": [
+    0.5425,
+    0.675
+   ],
+   "score_as_first": 0.65,
+   "score_as_second": 0.57,
+   "score_by_seed": {
+    "0": 0.655,
+    "1": 0.565
+   },
+   "p1_wins": 104,
+   "p2_wins": 88,
+   "draws": 8,
+   "avg_plies": 27.01,
+   "a_mean_ms": 20.175017266434967,
+   "a_p95_ms": 35.03925070004071
+  },
+  "MCTS 1000 vs AB d4": {
+   "n": 200,
+   "win": 81,
+   "draw": 7,
+   "loss": 112,
+   "score": 0.4225,
+   "wilson": [
+    0.3561340152884573,
+    0.4917871156288825
+   ],
+   "bootstrap": [
+    0.3575,
+    0.4925
+   ],
+   "score_as_first": 0.47,
+   "score_as_second": 0.375,
+   "score_by_seed": {
+    "0": 0.44,
+    "1": 0.405
+   },
+   "p1_wins": 106,
+   "p2_wins": 87,
+   "draws": 7,
+   "avg_plies": 28.58,
+   "a_mean_ms": 20.80061607142866,
+   "a_p95_ms": 36.943398899984466
+  },
+  "MCTS 2000 vs Heuristic": {
+   "n": 200,
+   "win": 144,
+   "draw": 4,
+   "loss": 52,
+   "score": 0.73,
+   "wilson": [
+    0.664564384587978,
+    0.7867664526895944
+   ],
+   "bootstrap": [
+    0.67,
+    0.7875
+   ],
+   "score_as_first": 0.74,
+   "score_as_second": 0.72,
+   "score_by_seed": {
+    "0": 0.735,
+    "1": 0.725
+   },
+   "p1_wins": 100,
+   "p2_wins": 96,
+   "draws": 4,
+   "avg_plies": 26.46,
+   "a_mean_ms": 41.68698210268849,
+   "a_p95_ms": 73.60570339997138
+  },
+  "MCTS 2000 vs AB d4": {
+   "n": 200,
+   "win": 114,
+   "draw": 6,
+   "loss": 80,
+   "score": 0.585,
+   "wilson": [
+    0.5157378707263818,
+    0.6510583082675037
+   ],
+   "bootstrap": [
+    0.5225,
+    0.65
+   ],
+   "score_as_first": 0.605,
+   "score_as_second": 0.565,
+   "score_by_seed": {
+    "0": 0.6,
+    "1": 0.57
+   },
+   "p1_wins": 101,
+   "p2_wins": 93,
+   "draws": 6,
+   "avg_plies": 29.405,
+   "a_mean_ms": 41.25831179905852,
+   "a_p95_ms": 71.33023460001483
+  },
+  "MCTS 4000 vs Heuristic": {
+   "n": 200,
+   "win": 142,
+   "draw": 4,
+   "loss": 54,
+   "score": 0.72,
+   "wilson": [
+    0.6540756858222899,
+    0.7776320715736488
+   ],
+   "bootstrap": [
+    0.66,
+    0.7825
+   ],
+   "score_as_first": 0.8,
+   "score_as_second": 0.64,
+   "score_by_seed": {
+    "0": 0.775,
+    "1": 0.665
+   },
+   "p1_wins": 114,
+   "p2_wins": 82,
+   "draws": 4,
+   "avg_plies": 26.43,
+   "a_mean_ms": 84.47945371888666,
+   "a_p95_ms": 148.09876649999865
+  },
+  "MCTS 4000 vs AB d4": {
+   "n": 200,
+   "win": 112,
+   "draw": 6,
+   "loss": 82,
+   "score": 0.575,
+   "wilson": [
+    0.5057080512046821,
+    0.6414650479075696
+   ],
+   "bootstrap": [
+    0.51,
+    0.6425
+   ],
+   "score_as_first": 0.655,
+   "score_as_second": 0.495,
+   "score_by_seed": {
+    "0": 0.615,
+    "1": 0.535
+   },
+   "p1_wins": 113,
+   "p2_wins": 81,
+   "draws": 6,
+   "avg_plies": 29.265,
+   "a_mean_ms": 82.98692579479291,
+   "a_p95_ms": 144.3036894999409
+  }
+ }
+}

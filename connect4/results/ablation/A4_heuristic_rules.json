@@ -1,0 +1,274 @@
+{
+ "A4": {
+  "Heuristic[đủ luật] vs Random": {
+   "n": 200,
+   "win": 199,
+   "draw": 0,
+   "loss": 1,
+   "score": 0.995,
+   "wilson": [
+    0.9722256001302286,
+    0.999116854010634
+   ],
+   "bootstrap": [
+    0.985,
+    1.0
+   ],
+   "score_as_first": 1.0,
+   "score_as_second": 0.99,
+   "score_by_seed": {
+    "0": 0.99,
+    "1": 1.0
+   },
+   "p1_wins": 101,
+   "p2_wins": 99,
+   "draws": 0,
+   "avg_plies": 11.985,
+   "a_mean_ms": 0.052936479952632426,
+   "a_p95_ms": 0.09150785003839701
+  },
+  "Heuristic[đủ luật] vs AB d2": {
+   "n": 200,
+   "win": 79,
+   "draw": 12,
+   "loss": 109,
+   "score": 0.425,
+   "wilson": [
+    0.35853495209243025,
+    0.4942919487953179
+   ],
+   "bootstrap": [
+    0.3575,
+    0.4925
+   ],
+   "score_as_first": 0.475,
+   "score_as_second": 0.375,
+   "score_by_seed": {
+    "0": 0.435,
+    "1": 0.415
+   },
+   "p1_wins": 104,
+   "p2_wins": 84,
+   "draws": 12,
+   "avg_plies": 27.31,
+   "a_mean_ms": 0.045097189167646254,
+   "a_p95_ms": 0.0853122498938319
+  },
+  "Heuristic[tắt chặn] vs Random": {
+   "n": 200,
+   "win": 190,
+   "draw": 0,
+   "loss": 10,
+   "score": 0.95,
+   "wilson": [
+    0.9104209437021562,
+    0.9726176509713551
+   ],
+   "bootstrap": [
+    0.92,
+    0.975
+   ],
+   "score_as_first": 1.0,
+   "score_as_second": 0.9,
+   "score_by_seed": {
+    "0": 0.95,
+    "1": 0.95
+   },
+   "p1_wins": 110,
+   "p2_wins": 90,
+   "draws": 0,
+   "avg_plies": 11.46,
+   "a_mean_ms": 0.0719325992383902,
+   "a_p95_ms": 0.12625199985905056
+  },
+  "Heuristic[tắt chặn] vs AB d2": {
+   "n": 200,
+   "win": 66,
+   "draw": 6,
+   "loss": 128,
+   "score": 0.345,
+   "wilson": [
+    0.2825968690139029,
+    0.41324539282077655
+   ],
+   "bootstrap": [
+    0.2825,
+    0.41
+   ],
+   "score_as_first": 0.415,
+   "score_as_second": 0.275,
+   "score_by_seed": {
+    "0": 0.335,
+    "1": 0.355
+   },
+   "p1_wins": 111,
+   "p2_wins": 83,
+   "draws": 6,
+   "avg_plies": 21.825,
+   "a_mean_ms": 0.056695825790147945,
+   "a_p95_ms": 0.09873574997527614
+  },
+  "Heuristic[tắt tránh tự sát] vs Random": {
+   "n": 200,
+   "win": 199,
+   "draw": 0,
+   "loss": 1,
+   "score": 0.995,
+   "wilson": [
+    0.9722256001302286,
+    0.999116854010634
+   ],
+   "bootstrap": [
+    0.985,
+    1.0
+   ],
+   "score_as_first": 1.0,
+   "score_as_second": 0.99,
+   "score_by_seed": {
+    "0": 1.0,
+    "1": 0.99
+   },
+   "p1_wins": 101,
+   "p2_wins": 99,
+   "draws": 0,
+   "avg_plies": 11.995,
+   "a_mean_ms": 0.06408962308106195,
+   "a_p95_ms": 0.1165367999874434
+  },
+  "Heuristic[tắt tránh tự sát] vs AB d2": {
+   "n": 200,
+   "win": 58,
+   "draw": 2,
+   "loss": 140,
+   "score": 0.295,
+   "wilson": [
+    0.23613844271901735,
+    0.3615884197074943
+   ],
+   "bootstrap": [
+    0.23,
+    0.3625
+   ],
+   "score_as_first": 0.36,
+   "score_as_second": 0.23,
+   "score_by_seed": {
+    "0": 0.305,
+    "1": 0.285
+   },
+   "p1_wins": 112,
+   "p2_wins": 86,
+   "draws": 2,
+   "avg_plies": 22.73,
+   "a_mean_ms": 0.055998234214780014,
+   "a_p95_ms": 0.09846500001913228
+  },
+  "Heuristic[tắt vị trí] vs Random": {
+   "n": 200,
+   "win": 199,
+   "draw": 0,
+   "loss": 1,
+   "score": 0.995,
+   "wilson": [
+    0.9722256001302286,
+    0.999116854010634
+   ],
+   "bootstrap": [
+    0.985,
+    1.0
+   ],
+   "score_as_first": 1.0,
+   "score_as_second": 0.99,
+   "score_by_seed": {
+    "0": 1.0,
+    "1": 0.99
+   },
+   "p1_wins": 101,
+   "p2_wins": 99,
+   "draws": 0,
+   "avg_plies": 17.475,
+   "a_mean_ms": 0.010569480314686736,
+   "a_p95_ms": 0.015993399983926796
+  },
+  "Heuristic[tắt vị trí] vs AB d2": {
+   "n": 200,
+   "win": 7,
+   "draw": 2,
+   "loss": 191,
+   "score": 0.04,
+   "wilson": [
+    0.02040538715065641,
+    0.07693293829419882
+   ],
+   "bootstrap": [
+    0.015,
+    0.0675
+   ],
+   "score_as_first": 0.065,
+   "score_as_second": 0.015,
+   "score_by_seed": {
+    "0": 0.055,
+    "1": 0.025
+   },
+   "p1_wins": 104,
+   "p2_wins": 94,
+   "draws": 2,
+   "avg_plies": 25.5,
+   "a_mean_ms": 0.011333560837361912,
+   "a_p95_ms": 0.019118249952043698
+  },
+  "Heuristic[chỉ thắng ngay] vs Random": {
+   "n": 200,
+   "win": 148,
+   "draw": 0,
+   "loss": 52,
+   "score": 0.74,
+   "wilson": [
+    0.6750912860870691,
+    0.795862631072137
+   ],
+   "bootstrap": [
+    0.675,
+    0.8
+   ],
+   "score_as_first": 0.83,
+   "score_as_second": 0.65,
+   "score_by_seed": {
+    "0": 0.77,
+    "1": 0.71
+   },
+   "p1_wins": 118,
+   "p2_wins": 82,
+   "draws": 0,
+   "avg_plies": 15.98,
+   "a_mean_ms": 0.004416202951418894,
+   "a_p95_ms": 0.00568015017279322
+  },
+  "Heuristic[chỉ thắng ngay] vs AB d2": {
+   "n": 200,
+   "win": 5,
+   "draw": 0,
+   "loss": 195,
+   "score": 0.025,
+   "wilson": [
+    0.010724561470787711,
+    0.05717914415161715
+   ],
+   "bootstrap": [
+    0.005,
+    0.05
+   ],
+   "score_as_first": 0.03,
+   "score_as_second": 0.02,
+   "score_by_seed": {
+    "0": 0.04,
+    "1": 0.01
+   },
+   "p1_wins": 101,
+   "p2_wins": 99,
+   "draws": 0,
+   "avg_plies": 13.625,
+   "a_mean_ms": 0.005893399997436918,
+   "a_p95_ms": 0.007542500020463191
+  }
+ }
+}

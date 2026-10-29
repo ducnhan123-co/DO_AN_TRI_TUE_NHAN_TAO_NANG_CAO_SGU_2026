@@ -1,0 +1,214 @@
+{
+  "config": {
+    "mode": "time-50ms",
+    "seeds": [
+      0,
+      1
+    ],
+    "games_per_seed": 100,
+    "games_per_pair": 200,
+    "opening_plies": 4,
+    "agents": {
+      "Random": "random",
+      "Heuristic": "heuristic",
+      "AlphaBeta": "alphabeta(t=0.05s)",
+      "MCTS": "mcts(t=0.05s)"
+    },
+    "environment": {
+      "python": "3.13.17",
+      "platform": "Linux-6.18.44-fc-v165-x86_64-with-glibc2.39",
+      "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+      "cpu_count": 2,
+      "gpu": "không dùng",
+      "date": "2026-10-27 10:33:29"
+    },
+    "time_budget_ms": 50
+  },
+  "pairs": {
+    "Random vs Heuristic": {
+      "n": 200,
+      "win": 1,
+      "draw": 0,
+      "loss": 199,
+      "score": 0.005,
+      "wilson": [
+        0.0008831459893662054,
+        0.02777439986977148
+      ],
+      "bootstrap": [
+        0.0,
+        0.015
+      ],
+      "score_as_first": 0.01,
+      "score_as_second": 0.0,
+      "score_by_seed": {
+        "0": 0.0,
+        "1": 0.01
+      },
+      "p1_wins": 101,
+      "p2_wins": 99,
+      "draws": 0,
+      "avg_plies": 12.285
+    },
+    "Random vs AlphaBeta": {
+      "n": 200,
+      "win": 2,
+      "draw": 0,
+      "loss": 198,
+      "score": 0.01,
+      "wilson": [
+        0.0027466006037749346,
+        0.03572248519617954
+      ],
+      "bootstrap": [
+        0.0,
+        0.025
+      ],
+      "score_as_first": 0.02,
+      "score_as_second": 0.0,
+      "score_by_seed": {
+        "0": 0.01,
+        "1": 0.01
+      },
+      "p1_wins": 102,
+      "p2_wins": 98,
+      "draws": 0,
+      "avg_plies": 12.8
+    },
+    "Random vs MCTS": {
+      "n": 200,
+      "win": 0,
+      "draw": 0,
+      "loss": 200,
+      "score": 0.0,
+      "wilson": [
+        0.0,
+        0.018846005918320894
+      ],
+      "bootstrap": [
+        0.0,
+        0.0
+      ],
+      "score_as_first": 0.0,
+      "score_as_second": 0.0,
+      "score_by_seed": {
+        "0": 0.0,
+        "1": 0.0
+      },
+      "p1_wins": 100,
+      "p2_wins": 100,
+      "draws": 0,
+      "avg_plies": 11.92
+    },
+    "Heuristic vs AlphaBeta": {
+      "n": 200,
+      "win": 31,
+      "draw": 7,
+      "loss": 162,
+      "score": 0.1725,
+      "wilson": [
+        0.12643947206116635,
+        0.23090466181533387
+      ],
+      "bootstrap": [
+        0.1225,
+        0.2275
+      ],
+      "score_as_first": 0.22,
+      "score_as_second": 0.125,
+      "score_by_seed": {
+        "0": 0.17,
+        "1": 0.175
+      },
+      "p1_wins": 106,
+      "p2_wins": 87,
+      "draws": 7,
+      "avg_plies": 25.03
+    },
+    "Heuristic vs MCTS": {
+      "n": 200,
+      "win": 66,
+      "draw": 7,
+      "loss": 127,
+      "score": 0.3475,
+      "wilson": [
+        0.2849410423964412,
+        0.41580698940864674
+      ],
+      "bootstrap": [
+        0.2875,
+        0.4125
+      ],
+      "score_as_first": 0.415,
+      "score_as_second": 0.28,
+      "score_by_seed": {
+        "0": 0.365,
+        "1": 0.33
+      },
+      "p1_wins": 110,
+      "p2_wins": 83,
+      "draws": 7,
+      "avg_plies": 26.46
+    },
+    "AlphaBeta vs MCTS": {
+      "n": 200,
+      "win": 124,
+      "draw": 2,
+      "loss": 74,
+      "score": 0.625,
+      "wilson": [
+        0.5561417515728713,
+        0.6891467469475485
+      ],
+      "bootstrap": [
+        0.555,
+        0.6925
+      ],
+      "score_as_first": 0.66,
+      "score_as_second": 0.59,
+      "score_by_seed": {
+        "0": 0.575,
+        "1": 0.675
+      },
+      "p1_wins": 106,
+      "p2_wins": 92,
+      "draws": 2,
+      "avg_plies": 28.81
+    }
+  },
+  "cost": {
+    "Random": {
+      "moves": 2352,
+      "mean_ms": 0.0038581556122908238,
+      "p95_ms": 0.00803844997676606,
+      "max_ms": 0.4870230000051379,
+      "mean_nodes": 0.0,
+      "mean_sims": 0.0
+    },
+    "Heuristic": {
+      "moves": 5181,
+      "mean_ms": 0.05763699401683105,
+      "p95_ms": 0.10699000006297865,
+      "max_ms": 1.9404070000064166,
+      "mean_nodes": 0.0,
+      "mean_sims": 0.0
+    },
+    "AlphaBeta": {
+      "moves": 5558,
+      "mean_ms": 34.95481286847774,
+      "p95_ms": 51.53529284997944,
+      "max_ms": 58.9955350000082,
+      "mean_nodes": 6606.571248650594,
+      "mean_sims": 0.0
+    },
+    "MCTS": {
+      "moves": 5570,
+      "mean_ms": 49.725471194253416,
+      "p95_ms": 50.34104829999251,
+      "max_ms": 89.24219699997593,
+      "mean_nodes": 1518.437881508079,
+      "mean_sims": 3781.443447037702
+    }
+  },
+  "wall_seconds": 472.343825340271
+}
