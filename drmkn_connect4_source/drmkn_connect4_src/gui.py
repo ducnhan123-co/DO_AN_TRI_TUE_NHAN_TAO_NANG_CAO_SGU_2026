@@ -80,9 +80,9 @@ class Connect4GUI:
         self.scores = {"player": 0, "ai": 0, "draw": 0}
         self.first_turn_player = True
 
-        # Display config tối ưu cho bàn 8x9
-        self.win_width = 1000
-        self.win_height = 940
+        # Display config gọn gàng, vừa vặn mọi màn hình laptop (không tràn màn hình)
+        self.win_width = 800
+        self.win_height = 690
         self._calculate_board_geometry()
 
         pygame.init()
@@ -91,25 +91,25 @@ class Connect4GUI:
         pygame.display.set_caption("Connect 4 - AI Strategy Arena (Bàn cờ 8x9)")
         self.clock = pygame.time.Clock()
 
-        # Fonts
-        self.font_title = pygame.font.SysFont(["segoeui", "calibri", "arial"], 26, bold=True)
-        self.font_sub = pygame.font.SysFont(["segoeui", "calibri", "arial"], 14, bold=True)
-        self.font_toggle = pygame.font.SysFont(["segoeui", "calibri", "arial"], 14, bold=True)
-        self.font_score = pygame.font.SysFont(["segoeui", "calibri", "arial"], 20, bold=True)
-        self.font_status = pygame.font.SysFont(["segoeui", "calibri", "arial"], 15, bold=True)
-        self.font_btn = pygame.font.SysFont(["segoeui", "calibri", "arial"], 15, bold=True)
-        self.font_modal_title = pygame.font.SysFont(["segoeui", "calibri", "arial"], 30, bold=True)
+        # Fonts cân đối cho màn hình laptop
+        self.font_title = pygame.font.SysFont(["segoeui", "calibri", "arial"], 22, bold=True)
+        self.font_sub = pygame.font.SysFont(["segoeui", "calibri", "arial"], 13, bold=True)
+        self.font_toggle = pygame.font.SysFont(["segoeui", "calibri", "arial"], 12, bold=True)
+        self.font_score = pygame.font.SysFont(["segoeui", "calibri", "arial"], 17, bold=True)
+        self.font_status = pygame.font.SysFont(["segoeui", "calibri", "arial"], 13, bold=True)
+        self.font_btn = pygame.font.SysFont(["segoeui", "calibri", "arial"], 14, bold=True)
+        self.font_modal_title = pygame.font.SysFont(["segoeui", "calibri", "arial"], 24, bold=True)
 
         self.reset_game()
 
     def _calculate_board_geometry(self):
-        """Tính toán kích thước ô cờ và vị trí bàn cờ dựa trên 8 hàng x 9 cột."""
-        self.cell_size = 78
-        self.radius = 32
-        self.board_w = self.board_cols * self.cell_size + 40
-        self.board_h = self.board_rows * self.cell_size + 30
+        """Tính toán kích thước ô cờ và vị trí bàn cờ gọn gàng cho 8 hàng x 9 cột."""
+        self.cell_size = 58
+        self.radius = 24
+        self.board_w = self.board_cols * self.cell_size + 30
+        self.board_h = self.board_rows * self.cell_size + 24
         self.board_x = (self.win_width - self.board_w) // 2
-        self.board_y = 222
+        self.board_y = 160
 
     def reset_game(self):
         """Khởi động lại ván cờ với kích thước 8x9."""
@@ -131,12 +131,12 @@ class Connect4GUI:
         self.animating_token = None
 
     def get_cell_center(self, row, col):
-        x = self.board_x + 20 + col * self.cell_size + self.cell_size // 2
-        y = self.board_y + 15 + row * self.cell_size + self.cell_size // 2
+        x = self.board_x + 15 + col * self.cell_size + self.cell_size // 2
+        y = self.board_y + 12 + row * self.cell_size + self.cell_size // 2
         return x, y
 
     def get_col_from_x(self, mouse_x):
-        start_x = self.board_x + 20
+        start_x = self.board_x + 15
         if start_x <= mouse_x <= start_x + self.board_cols * self.cell_size:
             col = int((mouse_x - start_x) // self.cell_size)
             if 0 <= col < self.board_cols:
@@ -152,24 +152,24 @@ class Connect4GUI:
         token_surf = pygame.Surface((self.radius * 2 + 8, self.radius * 2 + 8), pygame.SRCALPHA)
         cx, cy = self.radius + 4, self.radius + 4
 
-        pygame.draw.circle(token_surf, (0, 0, 0, int(80 * (alpha / 255))), (cx, cy + 3), self.radius)
+        pygame.draw.circle(token_surf, (0, 0, 0, int(80 * (alpha / 255))), (cx, cy + 2), self.radius)
         pygame.draw.circle(token_surf, (*col_dark, alpha), (cx, cy), self.radius)
-        pygame.draw.circle(token_surf, (*col_main, alpha), (cx, cy - 1), self.radius - 3)
-        pygame.draw.circle(token_surf, (*col_dark, int(alpha * 0.7)), (cx, cy - 1), max(2, self.radius - 12), width=2)
-        pygame.draw.circle(token_surf, (*col_light, int(180 * (alpha / 255))), (cx - 8, cy - 9), max(4, self.radius // 4))
+        pygame.draw.circle(token_surf, (*col_main, alpha), (cx, cy - 1), self.radius - 2)
+        pygame.draw.circle(token_surf, (*col_dark, int(alpha * 0.7)), (cx, cy - 1), max(2, self.radius - 10), width=2)
+        pygame.draw.circle(token_surf, (*col_light, int(180 * (alpha / 255))), (cx - 5, cy - 6), max(3, self.radius // 4))
 
         surface.blit(token_surf, (x - cx, y - cy))
 
     def draw_header(self):
         mouse_pos = pygame.mouse.get_pos()
-        header_h = 192
-        header_rect = pygame.Rect(self.board_x, 14, self.board_w, header_h)
-        pygame.draw.rect(self.screen, COLOR_BG_CARD, header_rect, border_radius=18)
-        pygame.draw.rect(self.screen, (51, 65, 85), header_rect, width=2, border_radius=18)
+        header_h = 142
+        header_rect = pygame.Rect(self.board_x, 10, self.board_w, header_h)
+        pygame.draw.rect(self.screen, COLOR_BG_CARD, header_rect, border_radius=14)
+        pygame.draw.rect(self.screen, (51, 65, 85), header_rect, width=2, border_radius=14)
 
         # 1. Title & Opponent
         title_txt = self.font_title.render("CONNECT 4", True, COLOR_TEXT_PRIMARY)
-        self.screen.blit(title_txt, (self.board_x + 20, 20))
+        self.screen.blit(title_txt, (self.board_x + 16, 14))
 
         opp_name = self.opponent.__class__.__name__ if self.opponent else "Random AI"
         if opp_name == "HeuristicAgent":
@@ -178,64 +178,62 @@ class Connect4GUI:
             opp_name = "PPO Neural AI"
 
         badge_txt = self.font_sub.render(f"VS {opp_name.upper()} ({self.board_rows}x{self.board_cols})", True, COLOR_ACCENT_CYAN)
-        self.screen.blit(badge_txt, (self.board_x + 22, 52))
+        self.screen.blit(badge_txt, (self.board_x + 18, 40))
 
         # 2. Scoreboard Widgets
-        score_x = self.board_x + self.board_w - 320
+        score_x = self.board_x + self.board_w - 240
         p_col = COLOR_RED_MAIN if self.player_symb == 1 else COLOR_YELLOW_MAIN
-        pygame.draw.circle(self.screen, p_col, (score_x + 10, 42), 8)
+        pygame.draw.circle(self.screen, p_col, (score_x + 8, 32), 6)
         p_lbl = self.font_sub.render("BẠN", True, COLOR_TEXT_MUTED)
-        self.screen.blit(p_lbl, (score_x + 25, 24))
+        self.screen.blit(p_lbl, (score_x + 18, 16))
         p_val = self.font_score.render(str(self.scores["player"]), True, COLOR_TEXT_PRIMARY)
-        self.screen.blit(p_val, (score_x + 25, 42))
+        self.screen.blit(p_val, (score_x + 18, 32))
 
         d_lbl = self.font_sub.render("HÒA", True, COLOR_TEXT_MUTED)
-        self.screen.blit(d_lbl, (score_x + 115, 24))
+        self.screen.blit(d_lbl, (score_x + 88, 16))
         d_val = self.font_score.render(str(self.scores["draw"]), True, COLOR_TEXT_PRIMARY)
-        self.screen.blit(d_val, (score_x + 115, 42))
+        self.screen.blit(d_val, (score_x + 88, 32))
 
         ai_col = COLOR_YELLOW_MAIN if self.player_symb == 1 else COLOR_RED_MAIN
-        pygame.draw.circle(self.screen, ai_col, (score_x + 200, 42), 8)
+        pygame.draw.circle(self.screen, ai_col, (score_x + 158, 32), 6)
         ai_lbl = self.font_sub.render("AI", True, COLOR_TEXT_MUTED)
-        self.screen.blit(ai_lbl, (score_x + 215, 24))
+        self.screen.blit(ai_lbl, (score_x + 168, 16))
         ai_val = self.font_score.render(str(self.scores["ai"]), True, COLOR_TEXT_PRIMARY)
-        self.screen.blit(ai_val, (score_x + 215, 42))
+        self.screen.blit(ai_val, (score_x + 168, 32))
 
-        # 3. SELECTOR ROW: First-turn AND Board-size
-        btn_h = 32
-        
-        # Turn selector
-        btn_w_turn = 160
-        btn_player_rect = pygame.Rect(self.board_x + 20, 84, btn_w_turn, btn_h)
-        btn_ai_rect = pygame.Rect(self.board_x + 20 + btn_w_turn + 8, 84, btn_w_turn, btn_h)
+        # 3. SELECTOR ROW: Turn buttons & Board Size Badge
+        btn_h = 28
+        btn_w_turn = 135
+        btn_player_rect = pygame.Rect(self.board_x + 14, 66, btn_w_turn, btn_h)
+        btn_ai_rect = pygame.Rect(self.board_x + 14 + btn_w_turn + 8, 66, btn_w_turn, btn_h)
 
         # Draw Player First
         is_player_first = self.first_turn_player
         bg_pf = (16, 185, 129) if is_player_first else ((51, 65, 85) if btn_player_rect.collidepoint(mouse_pos) else (30, 41, 59))
-        pygame.draw.rect(self.screen, bg_pf, btn_player_rect, border_radius=8)
-        pygame.draw.rect(self.screen, (255, 255, 255) if is_player_first else (71, 85, 105), btn_player_rect, width=1, border_radius=8)
+        pygame.draw.rect(self.screen, bg_pf, btn_player_rect, border_radius=6)
+        pygame.draw.rect(self.screen, (255, 255, 255) if is_player_first else (71, 85, 105), btn_player_rect, width=1, border_radius=6)
         t_pf = self.font_toggle.render("👤 Bạn đi trước (🔴)" if is_player_first else "Bạn đi trước", True, (255, 255, 255) if is_player_first else (148, 163, 184))
         self.screen.blit(t_pf, (btn_player_rect.centerx - t_pf.get_width() // 2, btn_player_rect.centery - t_pf.get_height() // 2))
 
         # Draw AI First
         is_ai_first = not self.first_turn_player
         bg_af = (99, 102, 241) if is_ai_first else ((51, 65, 85) if btn_ai_rect.collidepoint(mouse_pos) else (30, 41, 59))
-        pygame.draw.rect(self.screen, bg_af, btn_ai_rect, border_radius=8)
-        pygame.draw.rect(self.screen, (255, 255, 255) if is_ai_first else (71, 85, 105), btn_ai_rect, width=1, border_radius=8)
+        pygame.draw.rect(self.screen, bg_af, btn_ai_rect, border_radius=6)
+        pygame.draw.rect(self.screen, (255, 255, 255) if is_ai_first else (71, 85, 105), btn_ai_rect, width=1, border_radius=6)
         t_af = self.font_toggle.render("🤖 AI đi trước (🔴)" if is_ai_first else "AI đi trước", True, (255, 255, 255) if is_ai_first else (148, 163, 184))
         self.screen.blit(t_af, (btn_ai_rect.centerx - t_af.get_width() // 2, btn_ai_rect.centery - t_af.get_height() // 2))
 
         # Board Size Info Badge (Dedicated 8x9)
-        badge_w = 200
-        badge_x = self.board_x + self.board_w - badge_w - 20
-        badge_rect = pygame.Rect(badge_x, 84, badge_w, btn_h)
-        pygame.draw.rect(self.screen, (30, 41, 59), badge_rect, border_radius=8)
-        pygame.draw.rect(self.screen, (59, 130, 246), badge_rect, width=1, border_radius=8)
+        badge_w = 160
+        badge_x = self.board_x + self.board_w - badge_w - 14
+        badge_rect = pygame.Rect(badge_x, 66, badge_w, btn_h)
+        pygame.draw.rect(self.screen, (30, 41, 59), badge_rect, border_radius=6)
+        pygame.draw.rect(self.screen, (59, 130, 246), badge_rect, width=1, border_radius=6)
         t_badge = self.font_toggle.render("⊞ Bàn Cờ Chuẩn 8x9", True, (147, 197, 253))
         self.screen.blit(t_badge, (badge_rect.centerx - t_badge.get_width() // 2, badge_rect.centery - t_badge.get_height() // 2))
 
         # 4. Status Banner
-        status_bar = pygame.Rect(self.board_x + 20, 134, self.board_w - 40, 36)
+        status_bar = pygame.Rect(self.board_x + 14, 102, self.board_w - 28, 30)
         if not self.done:
             if self.current_turn == "player":
                 bar_col = (22, 101, 52)
@@ -261,7 +259,7 @@ class Connect4GUI:
                 txt = "🤝 TRẬN ĐẤU KẾT THÚC HÒA!"
                 txt_col = (241, 245, 249)
 
-        pygame.draw.rect(self.screen, bar_col, status_bar, border_radius=8)
+        pygame.draw.rect(self.screen, bar_col, status_bar, border_radius=6)
         st_surface = self.font_status.render(txt, True, txt_col)
         self.screen.blit(
             st_surface,
@@ -283,10 +281,10 @@ class Connect4GUI:
 
         # Hover column highlight
         if not self.done and self.current_turn == "player" and self.hover_col is not None:
-            col_x = self.board_x + 20 + self.hover_col * self.cell_size
-            beam_surf = pygame.Surface((self.cell_size, self.board_h - 20), pygame.SRCALPHA)
+            col_x = self.board_x + 15 + self.hover_col * self.cell_size
+            beam_surf = pygame.Surface((self.cell_size, self.board_h - 16), pygame.SRCALPHA)
             beam_surf.fill((255, 255, 255, 18))
-            self.screen.blit(beam_surf, (col_x, self.board_y + 10))
+            self.screen.blit(beam_surf, (col_x, self.board_y + 8))
 
         # Draw sockets & tokens
         for r in range(self.board_rows):
@@ -346,7 +344,7 @@ class Connect4GUI:
         )
         self.screen.blit(
             footer_txt,
-            (self.win_width // 2 - footer_txt.get_width() // 2, self.win_height - 35),
+            (self.win_width // 2 - footer_txt.get_width() // 2, self.win_height - 24),
         )
 
     def draw_modal(self):
@@ -357,13 +355,13 @@ class Connect4GUI:
         backdrop.fill((10, 15, 26, 185))
         self.screen.blit(backdrop, (0, 0))
 
-        modal_w, modal_h = 560, 310
+        modal_w, modal_h = 500, 275
         modal_x = (self.win_width - modal_w) // 2
         modal_y = (self.win_height - modal_h) // 2
         modal_rect = pygame.Rect(modal_x, modal_y, modal_w, modal_h)
 
-        pygame.draw.rect(self.screen, COLOR_BG_CARD, modal_rect, border_radius=24)
-        pygame.draw.rect(self.screen, (51, 65, 85), modal_rect, width=3, border_radius=24)
+        pygame.draw.rect(self.screen, COLOR_BG_CARD, modal_rect, border_radius=20)
+        pygame.draw.rect(self.screen, (51, 65, 85), modal_rect, width=2, border_radius=20)
 
         if self.winner == "player":
             title = "CHIẾN THẮNG!"
@@ -379,28 +377,28 @@ class Connect4GUI:
             sub = "Bàn cờ đã đầy và không bên nào giành chiến thắng."
 
         t_surf = self.font_modal_title.render(title, True, title_col)
-        self.screen.blit(t_surf, (modal_rect.centerx - t_surf.get_width() // 2, modal_y + 30))
+        self.screen.blit(t_surf, (modal_rect.centerx - t_surf.get_width() // 2, modal_y + 24))
 
         s_surf = self.font_sub.render(sub, True, COLOR_TEXT_MUTED)
-        self.screen.blit(s_surf, (modal_rect.centerx - s_surf.get_width() // 2, modal_y + 75))
+        self.screen.blit(s_surf, (modal_rect.centerx - s_surf.get_width() // 2, modal_y + 64))
 
         lbl_next = self.font_sub.render("CHỌN LƯỢT ĐI CHO VÁN TIẾP THEO:", True, (203, 213, 225))
-        self.screen.blit(lbl_next, (modal_rect.centerx - lbl_next.get_width() // 2, modal_y + 115))
+        self.screen.blit(lbl_next, (modal_rect.centerx - lbl_next.get_width() // 2, modal_y + 102))
 
         mouse_pos = pygame.mouse.get_pos()
-        btn_w, btn_h = 240, 46
+        btn_w, btn_h = 210, 42
 
-        btn_player_start = pygame.Rect(modal_rect.centerx - btn_w - 10, modal_y + 148, btn_w, btn_h)
-        btn_ai_start = pygame.Rect(modal_rect.centerx + 10, modal_y + 148, btn_w, btn_h)
-        btn_exit = pygame.Rect(modal_rect.centerx - 110, modal_y + 225, 220, 38)
+        btn_player_start = pygame.Rect(modal_rect.centerx - btn_w - 8, modal_y + 134, btn_w, btn_h)
+        btn_ai_start = pygame.Rect(modal_rect.centerx + 8, modal_y + 134, btn_w, btn_h)
+        btn_exit = pygame.Rect(modal_rect.centerx - 90, modal_y + 196, 180, 36)
 
         col_ps = (16, 185, 129) if btn_player_start.collidepoint(mouse_pos) else (5, 150, 105)
         col_as = (99, 102, 241) if btn_ai_start.collidepoint(mouse_pos) else (79, 70, 229)
         col_ex = (100, 116, 139) if btn_exit.collidepoint(mouse_pos) else (51, 65, 85)
 
-        pygame.draw.rect(self.screen, col_ps, btn_player_start, border_radius=12)
-        pygame.draw.rect(self.screen, col_as, btn_ai_start, border_radius=12)
-        pygame.draw.rect(self.screen, col_ex, btn_exit, border_radius=10)
+        pygame.draw.rect(self.screen, col_ps, btn_player_start, border_radius=10)
+        pygame.draw.rect(self.screen, col_as, btn_ai_start, border_radius=10)
+        pygame.draw.rect(self.screen, col_ex, btn_exit, border_radius=8)
 
         t_ps = self.font_btn.render("👤 Bạn đi trước (🔴)", True, (255, 255, 255))
         t_as = self.font_btn.render("🤖 AI đi trước (🔴)", True, (255, 255, 255))

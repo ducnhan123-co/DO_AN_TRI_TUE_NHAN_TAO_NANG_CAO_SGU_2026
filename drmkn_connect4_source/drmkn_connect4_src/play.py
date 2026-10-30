@@ -57,6 +57,12 @@ def get_agent_for_board(rows=8, cols=9):
     agents_8x9_dir = os.path.join(base_dir, "saved_agents_8x9")
     players_8x9 = _load_agents_from_dir(agents_8x9_dir)
 
+    # Nếu người dùng giải nén ở thư mục gốc ngoài cùng
+    if not players_8x9:
+        root_dir = os.path.dirname(base_dir)
+        root_agents_dir = os.path.join(root_dir, "saved_agents_8x9")
+        players_8x9 = _load_agents_from_dir(root_agents_dir)
+
     if players_8x9:
         print(f"[8x9] Da nap EnsembleAgent 8x9 gom {len(players_8x9)} agents da train tu Colab!")
         return EnsembleAgent(players_8x9)

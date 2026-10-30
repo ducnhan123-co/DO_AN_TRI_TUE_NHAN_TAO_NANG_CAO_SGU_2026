@@ -1,127 +1,110 @@
-# Connect4 Reinforcement Learning Project
+# 🔴 Connect 4 AI - Reinforcement Learning (Bàn cờ 8x9) 🟡
+> **Đồ Án Môn Học: Trí Tuệ Nhân Tạo Nâng Cao (TTNTNC) - SGU 2026**
 
-## Objective
-Develop a Reinforcement Learning (RL) agent capable of effectively playing Connect 4 by:
-1. Implementing and testing various RL algorithms.
-2. Comparing the performance of these approaches.
+Dự án phát triển tác tử AI chơi cờ **Connect 4 mở rộng (8 hàng × 9 cột)** sử dụng phương pháp **Học tăng cường (Curriculum Reinforcement Learning - PPO)** kết hợp **Ensemble Learning**, cùng các tác tử đối chuẩn thông minh (**Heuristic** và **Minimax**).
 
-## About Connect 4
-Connect 4 is a two-player, turn-based strategy game. The objective is to be the first to connect four of your pieces vertically, horizontally, or diagonally.
+---
 
-### Game Rules:
-- **Board Dimensions**: 6 rows × 7 columns.
-- **Players**: Each player uses distinct tokens (e.g., red and yellow).
-- **Turns**: Players take turns dropping tokens into columns.
-- **Winning**: Form a line of four tokens.
-- **Draw**: If the board is full and no one connects four.
+## 📌 1. Các Tính Năng Nổi Bật
+- **Kích thước bàn cờ 8x9**: Không gian trạng thái $8 \times 9 = 72$ ô cờ, $9$ hành động (cột 0 - 8).
+- **Hệ thống AI đa dạng**:
+  - 🧠 **Ensemble PPO Agents (Mạnh nhất)**: Kết hợp biểu quyết từ chuỗi 16 mô hình PPO được huấn luyện qua kỹ thuật Curriculum Learning.
+  - ⚡ **Heuristic Agent**: Đánh giá thế cờ theo kinh nghiệm, tự động chặn chuỗi 3, bắt chuỗi 4 và kiểm soát khu vực trung tâm.
+  - 🔍 **Minimax Agent**: Tìm kiếm vét cạn nước đi tối ưu kết hợp cắt tỉa Alpha-Beta.
+- **Giao diện Pygame đồ họa cao cấp**:
+  - Hiệu ứng thả quân chân thực, đổ bóng, hạt phát sáng (particle effects).
+  - Tùy chọn đi trước / đi sau trực tiếp trên màn hình (`[T]`).
+  - Tự động phát hiện 4 quân thắng cuộc và viền sáng hiệu ứng.
+- **Huấn luyện đám mây độc lập qua Google Colab**:
+  - Không làm nặng máy hay nóng laptop cá nhân.
+  - Tự động lưu checkpoint an toàn vào Google Drive.
 
-## State Representation
-- **Game Board**: Represented as a 6 × 7 grid with 42 blocks.
-  - `0`: Empty block.
-  - `1`: Filled by Player 1.
-  - `2`: Filled by Player 2.
-- **Actions**:
-  - **Action Space**: 7 discrete actions (columns 0-6).
-  - Invalid actions (e.g., selecting a full column) incur penalties.
+---
 
-## Reward Shaping
-- **Winning Move**: +10
-- **Blocking Opponent**: +3
-- **Illegal Move**: -50
-- **Draw**: 0
-- **Ongoing Game**: 0
+## 📂 2. Cấu Trúc Thư Mục Dự Án
+```text
+drmkn_connect4_source/
+├── Colab_Connect4_Train.ipynb       # Notebook huấn luyện 16 PPO agents trên Google Colab
+├── README.md                       # Hướng dẫn chi tiết dự án
+└── drmkn_connect4_src/             # Thư mục mã nguồn chính của game
+    ├── connect4.py                 # Môi trường Gym Connect 4 (8 hàng x 9 cột)
+    ├── gui.py                      # Giao diện đồ họa Pygame bàn cờ 8x9
+    ├── play.py                     # File chính để khởi động và chơi game
+    ├── heuristic.py                # Thuật toán Heuristic Agent
+    ├── minimax.py                  # Thuật toán Minimax (Alpha-Beta Pruning)
+    ├── ensemble.py                 # Thuật toán Ensemble Agent (Biểu quyết đa mô hình)
+    ├── train.py                    # Script huấn luyện cục bộ
+    ├── test.py                     # Script đo đạc tỷ lệ thắng (Benchmark Win-rate)
+    ├── requirements.txt            # Danh sách thư viện cần thiết
+    └── saved_agents_8x9/           # Thư mục chứa 16 file weights (agent0.zip ... agent15.zip)
+```
 
-## Environment Overview
-The Connect 4 environment is implemented as a custom Gym environment. Key features include:
-- **Action Space**: Seven discrete actions representing columns.
-- **Observation Space**: A 6 × 7 grid indicating the board state.
-- **Pygame Rendering**: The game board is visually rendered using Pygame.
-- **Random Opponent**: By default, the opponent is random, but it can be configured with heuristic or any other trained agents.
-- **Reward System**: Rewards and penalties guide the agent's learning process.
+---
 
-## Heuristic Agent
-The Heuristic Agent employs domain-specific knowledge to make decisions. Key features include:
-- **Winning Move Priority**: Prioritizes actions leading to an immediate win.
-- **Blocking Opponent**: Detects and blocks the opponent's winning moves.
-- **Central Column Preference**: Encourages moves near the center column for strategic positioning.
-- **Upper Confidence Bound (UCB)**: Balances exploration and exploitation during gameplay.
-- **Scoring Mechanism**: Evaluates potential moves based on heuristics such as chain formation and board evaluation.
+## 🚀 3. Hướng Dẫn Cài Đặt (Cho Bạn Bè / Thành Viên Nhóm)
 
-## Minimax Agent
-The Minimax Agent uses a game-tree search algorithm with the following features:
-- **Recursive Search**: Evaluates potential moves up to a configurable depth.
-- **Alpha-Beta Pruning**: Optimizes the search by eliminating branches that do not influence the final decision.
-- **Winning and Blocking Detection**: Identifies and prioritizes winning or blocking moves.
-- **Terminal State Evaluation**: Determines outcomes such as wins, losses, or draws at leaf nodes.
-- **Strategic Play**: Calculates optimal moves for both the agent and opponent to maximize the agent's chances of winning.
+### Bước 1: Clone mã nguồn về máy tính
+```bash
+git clone https://github.com/ducnhan123-co/DO_AN_TRI_TUE_NHAN_TAO_NANG_CAO_SGU_2026.git
+cd DO_AN_TRI_TUE_NHAN_TAO_NANG_CAO_SGU_2026/drmkn_connect4_source/drmkn_connect4_src
+```
 
+### Bước 2: Cài đặt các thư viện Python
+Yêu cầu Python 3.9 trở lên:
+```bash
+pip install -r requirements.txt
+```
+*(Bao gồm: `gymnasium`, `stable-baselines3`, `pygame`, `torch`, `numpy`, `tqdm`, `tensorboard`)*
 
+---
 
-<div align="center">
-    <img src="assets/play_against_heurestic_agent.gif" alt="Connect 4 Gameplay" width="600">
-    <p><em>Figure: Gameplay against Heurestic Agent</em></p>
-</div>
+## 🎮 4. Hướng Dẫn Chơi Game Trên Máy Tính (`play.py`)
 
+Sau khi cài đặt xong, bạn chỉ cần chạy lệnh:
+```bash
+python play.py
+```
 
-## Using Play, Test, and Train Functions
-### Play
-The `play` function allows you to interact with the Connect 4 environment. You can either play as a human against an agent or have two agents compete.
-- **Parameters**:
-  - `opponent`: The agent you want to play against.
-  - `player` (optional): An agent to play as Player 1 (default is human input).
-- **How to Run**:
-  - Human vs. Agent: Run `play(agent)`.
-  - Agent vs. Agent: Provide both `player` and `opponent` agents.
+### Cách điều khiển trong Game:
+* 🖱️ **Chuột trái**: Rê chuột qua các cột để ngắm và click để thả quân cờ đỏ (🔴).
+* 🔄 **Phím `[R]`**: Khởi động lại ván cờ mới.
+* 👥 **Phím `[T]`** hoặc nút trên góc trái: Đổi lượt (**Bạn đi trước** hoặc **AI đi trước**).
+* ❌ **Phím `[ESC]`**: Thoát khỏi game.
 
-### Test
-The `test` function evaluates an agent's performance against an opponent over multiple episodes.
-- **Parameters**:
-  - `player`: The agent to be tested.
-  - `opponent` (optional): The agent acting as the opponent (default is random).
-  - `mode`: Rendering mode (e.g., "human" or "stdout").
-- **How to Run**:
-  - Use `test(player, opponent)` to compute win rates.
-- **Example**:
-  - Evaluate an ensemble agent against random opponents:
-    ```python
-    players = [PPO.load(f"./saved_agents/agent{i}") for i in range(15)]
-    ensemble_player = EnsembleAgent(players)
-    NUM_GAMES = 10000
-    wins = 0
-    for _ in range(NUM_GAMES):
-        wins += test(ensemble_player)
-    winrate = wins / NUM_GAMES
-    print("Win rate:", winrate)
-    ```
+> **💡 Cơ chế nạp AI tự động:**
+> - Nếu thư mục `saved_agents_8x9/` đã có đủ các file `agent0.zip` ... `agent15.zip`, game sẽ nạp **Tổ hợp Ensemble 16 AI PPO** mạnh nhất.
+> - Nếu chưa có file weights, game sẽ tự động dùng **Heuristic Agent** thông minh để bạn chơi thử ngay mà không bị báo lỗi.
 
-### Train
-The `train` function is used to train an RL agent on the Connect 4 environment.
-- **Parameters**:
-  - `agent_algo`: The RL algorithm to use (e.g., PPO, DQN, A2C).
-  - `total_timesteps`: Total timesteps for training.
-  - `opp_path` (optional): Path to a pre-trained opponent agent.
-  - `opp_epsilon`: Exploration factor for the opponent.
-  - `tb_dir`: Directory for TensorBoard logs.
-  - `tb_log_name`: Name for TensorBoard logs.
-- **How to Run**:
-  - Train a PPO agent:
-    ```python
-    agent = train(agent_algo="PPO", total_timesteps=100_000, tb_dir="./logs", tb_log_name="PPO_agent")
-    ```
-  - Train an agent with a pre-trained opponent:
-    ```python
-    agent = train(agent_algo="PPO", total_timesteps=100_000, opp_path="./saved_agents/agent0", opp_algo="PPO", tb_dir="./logs", tb_log_name="PPO_vs_agent0")
-    ```
+---
 
+## ☁️ 5. Hướng Dẫn Tự Huấn Luyện AI Bằng Google Colab
 
-## Libraries Used
-- **[Gymnasium](https://gymnasium.farama.org/)**: For creating the Connect 4 environment.
-- **[Stable-Baselines3 (SB3)](https://stable-baselines3.readthedocs.io/)**: For RL algorithms such as PPO, DQN, and A2C.
-- **[Pygame](https://www.pygame.org/)**: For UI development and gameplay visualization.
-- **[tqdm](https://tqdm.github.io/)**: For progress bar visualization during training and evaluation.
+Nếu bạn muốn tự train lại hoặc huấn luyện thêm agent mới mà không làm nóng laptop:
 
-## How to Run
-1. Install dependencies: `pip install gymnasium stable-baselines3 pygame`.
-2. Clone the repository and navigate to the project directory.
-3. Run training scripts for specific algorithms.
-4. Visualize results using TensorBoard.
+1. Truy cập [Google Colab](https://colab.research.google.com/).
+2. Chọn **Upload** và tải lên file **`Colab_Connect4_Train.ipynb`** (nằm ở thư mục dự án).
+3. Vào menu **Runtime** ➜ **Change runtime type** ➜ Chọn **T4 GPU** (hoặc CPU High-RAM).
+4. Bấm **Chạy tất cả (Run all)**:
+   - Colab sẽ tự động cài thư viện và kết nối Google Drive của bạn.
+   - Quá trình Curriculum Learning sẽ tự train chuỗi 16 agents (Agent sau học cách khắc chế Agent trước).
+   - Checkpoint được lưu thẳng vào Google Drive (`Connect4_Models/saved_agents_8x9`).
+5. **Tải về máy tính:**
+   - Chạy ô cuối cùng (**Bước 5**) trong notebook, trình duyệt sẽ tự động tải file `saved_agents_8x9.zip` về máy.
+   - Giải nén file zip để lấy các file con (`agent0.zip` ... `agent15.zip`).
+   - Đặt toàn bộ 16 file con này vào thư mục:
+     ```text
+     drmkn_connect4_source/drmkn_connect4_src/saved_agents_8x9/
+     ```
+   - Chạy `python play.py` trên máy tính để trải nghiệm AI vừa train!
+
+> ⚠️ **LƯU Ý QUAN TRỌNG:**  
+> Các file `agent0.zip` đến `agent15.zip` là định dạng lưu mặc định của thư viện Stable-Baselines3. **KHÔNG GIẢI NÉN** các file `agent*.zip` này ra thư mục, hãy để nguyên đuôi `.zip`.
+
+---
+
+## 📊 6. Đánh Giá Hiệu Năng & Tỷ Lệ Thắng (`test.py`)
+Để đo đạc tỷ lệ thắng của Ensemble Agent qua hàng ngàn ván đấu đối chuẩn:
+```bash
+python test.py
+```
+Script sẽ tự động chạy mô phỏng không cần giao diện đồ họa và xuất tỷ lệ thắng (Win Rate) ra màn hình console.
