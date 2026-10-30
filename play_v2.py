@@ -1,17 +1,40 @@
-"""play_v2.py - Menu chơi Connect 4 (giao diện như code cũ) với bàn 8x9 và agent v2.
+"""
+play.py - Chạy chương trình chơi Connect 4 (giao diện nằm trong gui.py).
 
-    python play_v2.py [--model models/agent_8x9.zip] [--cell 100]
+    python play.py                          # hiện menu 1-5 như bản cũ
+    python play.py --mode agent             # vào thẳng: Người vs AI đã train (bàn 8x9)
+    python play.py --mode minimax --depth 4 # Người vs Minimax
+    python play.py --mode aivai             # xem hai AI đấu nhau
+    python play.py --rows 6 --cols 7        # bàn 6x7 cổ điển
+    python play.py --cell 44                # thu nhỏ nếu màn hình thấp
+Các mode: random | tactical | minimax | agent | aivai
 """
 import argparse
 import os
-import time
+import subprocess
+import sys
 
-import numpy as np
 
-from c4core import (COLS, ROWS, MinimaxPlayer, RandomPlayer, TacticalPlayer, drop_bit, has_won,
-                    is_full, legal_cols)
+def _set_board_from_argv():
+    """--rows/--cols phải được đọc TRƯỚC khi import c4core (kích thước bàn cố định lúc import)."""
+    for flag, var in (("--rows", "C4_ROWS"), ("--cols", "C4_COLS")):
+        if flag in sys.argv:
+            os.environ[var] = sys.argv[sys.argv.index(flag) + 1]
 
-MODEL_PATH = "models/agent_8x9.zip"
+
+_set_board_from_argv()
+
+from c4core import COLS, ROWS, MinimaxPlayer, RandomPlayer, TacticalPlayer  # noqa: E402
+
+MODES = ("random", "tactical", "minimax", "agent", "aivai")
+
+
+def model_path(rows=ROWS, cols=COLS):
+    return f"models/agent_{rows}x{cols}.zip"
+
+
+def exists(p):
+    return os.path.exists(p) or os.path.exists(p + ".zip")
 
 
 def load_agent(path):
@@ -21,78 +44,67 @@ def load_agent(path):
     return TorchPlayer(m.policy, deterministic=True, flip_avg=True, name=os.path.basename(path))
 
 
-def play(first, second, name_first, name_second, cell=100, delay=0.5):
-    """first/second: Player có act(me, opp), hoặc None = người (chuột). Người/ai đi trước là ĐỎ."""
-    from gui import BoardView
-    view = BoardView(cell)
-    bbs = [0, 0]
-    players, names = (first, second), (name_first, name_second)
-    title = f"Connect 4 | {name_first} (đỏ, đi trước) vs {name_second} (vàng)"
-    view.set_caption(title)
-    result = None
-    for ply in range(ROWS * COLS):
-        cur = ply % 2
-        me, opp = bbs[cur], bbs[1 - cur]
-        view.draw(bbs[0], bbs[1])
-        if not view.pump():
-            view.close(); return
-        if players[cur] is None:  # người chơi: click chuột, bỏ qua cột đã đầy
-            while True:
-                a = view.get_col()
-                if a is None:
-                    view.close(); return
-                if drop_bit(me | opp, a):
-                    break
-        else:
-            time.sleep(delay)
-            a = int(players[cur].act(me, opp))
-            if not drop_bit(me | opp, a):  # phòng hờ: agent trả nước sai -> đi ngẫu nhiên hợp lệ
-                a = legal_cols(me | opp)[0]
-        bbs[cur] |= drop_bit(me | opp, a)
-        if has_won(bbs[cur]):
-            result = f"{names[cur]} thắng!"
-            break
-    if result is None:
-        result = "Hoà!"
-    view.draw(bbs[0], bbs[1])
-    view.set_caption(f"{title} | {result}")
-    print("\n========== KẾT QUẢ ==========")
-    print(f"Đỏ (đi trước): {name_first} | Vàng: {name_second}")
-    print(result)
-    t = time.time()
-    while time.time() - t < 3 and view.pump():
-        time.sleep(0.05)
-    view.close()
+def ask_model(prompt, default):
+    p = input(f"{prompt} [{default}]: ").strip().strip('"') or default
+    return p
 
 
-def human_vs(opponent, opp_name, cell):
-    human_first = np.random.random() < 0.5
-    if human_first:
-        print("Bạn là ĐỎ, đi trước.")
-        play(None, opponent, "Human", opp_name, cell)
-    else:
-        print("Bạn là VÀNG, đối thủ đi trước.")
-        play(opponent, None, opp_name, "Human", cell)
+def ask_depth(default=4):
+    s = input(f"Độ sâu minimax (1-8) [{default}]: ").strip()
+    return min(max(int(s), 1), 8) if s.isdigit() else default
 
 
-def ask_model(default):
-    p = input(f"Đường dẫn model [{default}]: ").strip().strip('"') or default
-    if not (os.path.exists(p) or os.path.exists(p + ".zip")):
-        print("Không tìm thấy model:", p)
-        return None, None
-    return load_agent(p), "Agent " + os.path.basename(p)
+def build(mode, opts):
+    """Trả về dict tham số cho gui.App, hoặc None nếu thiếu model."""
+    kw = dict(me=None, labels=("BẠN", "AI"))
+    if mode == "random":
+        kw.update(opponent=RandomPlayer(), subtitle=f"VS RANDOM ({ROWS}x{COLS})")
+    elif mode == "tactical":
+        kw.update(opponent=TacticalPlayer(), subtitle=f"VS TACTICAL BOT ({ROWS}x{COLS})")
+    elif mode == "minimax":
+        d = opts["depth"]
+        kw.update(opponent=MinimaxPlayer(d), subtitle=f"VS MINIMAX d={d} ({ROWS}x{COLS})")
+    elif mode == "agent":
+        p = opts["model"] or model_path()
+        if not exists(p):
+            print("Không tìm thấy model:", p)
+            return None
+        kw.update(opponent=load_agent(p), subtitle=f"VS PPO NEURAL AI ({ROWS}x{COLS})")
+    elif mode == "aivai":
+        pa, pb = opts["model"] or model_path(), opts["model_b"] or opts["model"] or model_path()
+        for p in (pa, pb):
+            if not exists(p):
+                print("Không tìm thấy model:", p)
+                return None
+        kw.update(me=load_agent(pa), opponent=load_agent(pb), labels=("AI A", "AI B"),
+                  subtitle=f"AI vs AI ({ROWS}x{COLS})", ai_delay=0.6)
+    return kw
 
 
-def ask_depth():
-    s = input("Độ sâu minimax (1-8) [4]: ").strip()
-    return min(max(int(s), 1), 8) if s.isdigit() else 4
+def run_mode(mode, opts):
+    """Mở cửa sổ. Nếu người dùng bấm 'đổi bàn' thì chạy lại chương trình với bàn mới và thoát."""
+    kw = build(mode, opts)
+    if kw is None:
+        return
+    import pygame
+    from gui import App
+
+    def can_switch(nr, nc):
+        if mode in ("agent", "aivai") and not exists(model_path(nr, nc)):
+            return f"Không tìm thấy {model_path(nr, nc)}"
+        return None
+
+    app = App(cell=opts["cell"], can_switch=can_switch, **kw)
+    res = app.run()
+    pygame.quit()
+    if res:
+        nr, nc = res
+        cmd = [sys.executable, os.path.abspath(__file__), "--mode", mode, "--depth", str(opts["depth"]),
+               "--rows", str(nr), "--cols", str(nc), "--cell", str(opts["cell"])]
+        sys.exit(subprocess.call(cmd))
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default=MODEL_PATH)
-    ap.add_argument("--cell", type=int, default=100, help="kích thước ô (px), giảm nếu màn hình nhỏ")
-    a = ap.parse_args()
+def menu(opts):
     while True:
         print("\n" + "=" * 42)
         print(f"     CONNECT 4 ({ROWS}x{COLS}) - AI MENU")
@@ -101,30 +113,47 @@ def main():
         print("2. Human vs Tactical (thắng/chặn nước 1)")
         print("3. Human vs Minimax")
         print("4. Human vs trained agent")
-        print("5. Agent vs Agent")
+        print("5. Agent vs Agent (xem đấu)")
         print("0. Exit")
         print("=" * 42)
         c = input("Choose mode: ").strip()
+        o = dict(opts)
         if c == "1":
-            human_vs(RandomPlayer(), "Random", a.cell)
+            run_mode("random", o)
         elif c == "2":
-            human_vs(TacticalPlayer(), "Tactical", a.cell)
+            run_mode("tactical", o)
         elif c == "3":
-            d = ask_depth()
-            human_vs(MinimaxPlayer(d), f"Minimax(d={d})", a.cell)
+            o["depth"] = ask_depth(opts["depth"])
+            run_mode("minimax", o)
         elif c == "4":
-            ag, name = ask_model(a.model)
-            if ag:
-                human_vs(ag, name, a.cell)
+            o["model"] = ask_model("Đường dẫn model", opts["model"] or model_path())
+            run_mode("agent", o)
         elif c == "5":
-            print("--- Agent A (đỏ, đi trước) ---"); A, na = ask_model(a.model)
-            print("--- Agent B (vàng) ---"); B, nb = ask_model(a.model)
-            if A and B:
-                play(A, B, na + " [A]", nb + " [B]", a.cell, delay=0.6)
+            o["model"] = ask_model("Model Agent A (đỏ/cam)", opts["model"] or model_path())
+            o["model_b"] = ask_model("Model Agent B", o["model"])
+            run_mode("aivai", o)
         elif c == "0":
-            print("Exiting Connect 4."); break
+            print("Exiting Connect 4.")
+            return
         else:
             print("Invalid choice. Please select 0-5.")
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Connect 4 - AI Strategy Arena")
+    ap.add_argument("--mode", choices=MODES, default=None, help="bỏ trống = hiện menu")
+    ap.add_argument("--depth", type=int, default=4, help="độ sâu minimax")
+    ap.add_argument("--model", default=None, help="mặc định models/agent_<hàng>x<cột>.zip")
+    ap.add_argument("--model-b", dest="model_b", default=None, help="model của AI B (mode aivai)")
+    ap.add_argument("--cell", type=int, default=0, help="cỡ ô (px); 0 = tự chọn theo màn hình")
+    ap.add_argument("--rows", type=int, default=ROWS)
+    ap.add_argument("--cols", type=int, default=COLS)
+    a = ap.parse_args()
+    opts = dict(depth=a.depth, model=a.model, model_b=a.model_b, cell=a.cell)
+    if a.mode:
+        run_mode(a.mode, opts)
+    else:
+        menu(opts)
 
 
 if __name__ == "__main__":
