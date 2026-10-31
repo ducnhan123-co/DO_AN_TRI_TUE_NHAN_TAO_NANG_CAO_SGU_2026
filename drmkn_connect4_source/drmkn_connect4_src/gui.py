@@ -100,6 +100,10 @@ class Connect4GUI:
         self.font_btn = pygame.font.SysFont(["segoeui", "calibri", "arial"], 14, bold=True)
         self.font_modal_title = pygame.font.SysFont(["segoeui", "calibri", "arial"], 24, bold=True)
 
+        self.auto_play = False
+        self.auto_player = HeuristicAgent(c=0)
+        self.auto_reset_timer = 0.0
+
         self.reset_game()
 
     def _calculate_board_geometry(self):
@@ -117,6 +121,10 @@ class Connect4GUI:
         self.done = False
         self.winner = None
         self.winning_coords = None
+        self.adaptive_msg = ""
+
+        if hasattr(self.opponent, "learner") and self.opponent.learner:
+            self.opponent.learner.reset_match()
 
         if self.first_turn_player:
             self.player_symb = 1
@@ -203,7 +211,7 @@ class Connect4GUI:
 
         # 3. SELECTOR ROW: Turn buttons & Board Size Badge
         btn_h = 28
-        btn_w_turn = 135
+        btn_w_turn = 120
         btn_player_rect = pygame.Rect(self.board_x + 14, 66, btn_w_turn, btn_h)
         btn_ai_rect = pygame.Rect(self.board_x + 14 + btn_w_turn + 8, 66, btn_w_turn, btn_h)
 
@@ -212,7 +220,7 @@ class Connect4GUI:
         bg_pf = (16, 185, 129) if is_player_first else ((51, 65, 85) if btn_player_rect.collidepoint(mouse_pos) else (30, 41, 59))
         pygame.draw.rect(self.screen, bg_pf, btn_player_rect, border_radius=6)
         pygame.draw.rect(self.screen, (255, 255, 255) if is_player_first else (71, 85, 105), btn_player_rect, width=1, border_radius=6)
-        t_pf = self.font_toggle.render("👤 Bạn đi trước (🔴)" if is_player_first else "Bạn đi trước", True, (255, 255, 255) if is_player_first else (148, 163, 184))
+        t_pf = self.font_toggle.render("👤 Bạn đi trước" if is_player_first else "Bạn đi trước", True, (255, 255, 255) if is_player_first else (148, 163, 184))
         self.screen.blit(t_pf, (btn_player_rect.centerx - t_pf.get_width() // 2, btn_player_rect.centery - t_pf.get_height() // 2))
 
         # Draw AI First
@@ -220,16 +228,28 @@ class Connect4GUI:
         bg_af = (99, 102, 241) if is_ai_first else ((51, 65, 85) if btn_ai_rect.collidepoint(mouse_pos) else (30, 41, 59))
         pygame.draw.rect(self.screen, bg_af, btn_ai_rect, border_radius=6)
         pygame.draw.rect(self.screen, (255, 255, 255) if is_ai_first else (71, 85, 105), btn_ai_rect, width=1, border_radius=6)
-        t_af = self.font_toggle.render("🤖 AI đi trước (🔴)" if is_ai_first else "AI đi trước", True, (255, 255, 255) if is_ai_first else (148, 163, 184))
+        t_af = self.font_toggle.render("🤖 AI đi trước" if is_ai_first else "AI đi trước", True, (255, 255, 255) if is_ai_first else (148, 163, 184))
         self.screen.blit(t_af, (btn_ai_rect.centerx - t_af.get_width() // 2, btn_ai_rect.centery - t_af.get_height() // 2))
 
+        # Adaptive Learning Status Badge
+        badge_adapt_w = 135
+        badge_adapt_x = self.board_x + 14 + (btn_w_turn * 2) + 16
+        badge_adapt_rect = pygame.Rect(badge_adapt_x, 66, badge_adapt_w, btn_h)
+        pygame.draw.rect(self.screen, (15, 23, 42), badge_adapt_rect, border_radius=6)
+        pygame.draw.rect(self.screen, (16, 185, 129), badge_adapt_rect, width=1, border_radius=6)
+        learned_count = 0
+        if hasattr(self.opponent, "learner") and self.opponent.learner:
+            learned_count = getattr(self.opponent.learner, "total_learned_count", 0)
+        t_adapt = self.font_toggle.render(f"⚡ Tự học: {learned_count} bẫy", True, (52, 211, 153))
+        self.screen.blit(t_adapt, (badge_adapt_rect.centerx - t_adapt.get_width() // 2, badge_adapt_rect.centery - t_adapt.get_height() // 2))
+
         # Board Size Info Badge (Dedicated 8x9)
-        badge_w = 160
+        badge_w = 110
         badge_x = self.board_x + self.board_w - badge_w - 14
         badge_rect = pygame.Rect(badge_x, 66, badge_w, btn_h)
         pygame.draw.rect(self.screen, (30, 41, 59), badge_rect, border_radius=6)
         pygame.draw.rect(self.screen, (59, 130, 246), badge_rect, width=1, border_radius=6)
-        t_badge = self.font_toggle.render("⊞ Bàn Cờ Chuẩn 8x9", True, (147, 197, 253))
+        t_badge = self.font_toggle.render("⊞ Cờ 8x9", True, (147, 197, 253))
         self.screen.blit(t_badge, (badge_rect.centerx - t_badge.get_width() // 2, badge_rect.centery - t_badge.get_height() // 2))
 
         # 4. Status Banner
@@ -248,11 +268,11 @@ class Connect4GUI:
         else:
             if self.winner == "player":
                 bar_col = (22, 101, 52)
-                txt = "🎉 XUẤT SẮC! BẠN ĐÃ CHIẾN THẮNG!"
+                txt = getattr(self, "adaptive_msg", "") or "🎉 XUẤT SẮC! BẠN ĐÃ CHIẾN THẮNG!"
                 txt_col = (187, 247, 208)
             elif self.winner == "ai":
                 bar_col = (153, 27, 27)
-                txt = "🤖 AI ĐÃ CHIẾN THẮNG TRẬN NÀY!"
+                txt = getattr(self, "adaptive_msg", "") or "🤖 AI ĐÃ CHIẾN THẮNG TRẬN NÀY!"
                 txt_col = (254, 202, 202)
             else:
                 bar_col = (71, 85, 105)
@@ -337,18 +357,26 @@ class Connect4GUI:
                 self.draw_token(self.screen, cx, hover_y, self.player_symb, alpha=175)
 
     def draw_footer(self):
-        footer_txt = self.font_sub.render(
-            "[R]: Ván mới  |  [T]: Đổi lượt đi trước/sau  |  [ESC]: Thoát",
-            True,
-            (100, 116, 139),
-        )
+        if getattr(self, "auto_play", False):
+            pulse = int((math.sin(pygame.time.get_ticks() * 0.008) + 1) * 0.5 * 100 + 155)
+            footer_txt = self.font_sub.render(
+                "⚡ TỰ ĐẤU ĐANG BẬT: Hai AI đang tự chơi & tự học...  |  Nhấn [A] để tắt",
+                True,
+                (52, pulse, 153),
+            )
+        else:
+            footer_txt = self.font_sub.render(
+                "[R]: Ván mới  |  [T]: Đổi lượt  |  [A]: Bật AI Tự Đấu Tự Học  |  [ESC]: Thoát",
+                True,
+                (148, 163, 184),
+            )
         self.screen.blit(
             footer_txt,
             (self.win_width // 2 - footer_txt.get_width() // 2, self.win_height - 24),
         )
 
     def draw_modal(self):
-        if not self.done or self.animating_token is not None:
+        if not self.done or self.animating_token is not None or getattr(self, "auto_play", False):
             return None
 
         backdrop = pygame.Surface((self.win_width, self.win_height), pygame.SRCALPHA)
@@ -454,12 +482,24 @@ class Connect4GUI:
             else:
                 self.winner = "ai"
                 self.scores["ai"] += 1
+
+            # Tự động học thích nghi tức thì (Online Continual Learning)
+            if hasattr(self.opponent, "learner") and self.opponent.learner:
+                res = self.opponent.learner.learn_from_match(self.winner, self.player_symb, self.opp_symb)
+                cnt = res.get("total_learned", 0)
+                if self.winner == "player":
+                    self.adaptive_msg = f"🎉 BẠN THẮNG! 🧠 AI vừa học được bẫy này! (Tổng: {cnt} bẫy)"
+                elif self.winner == "ai":
+                    self.adaptive_msg = f"🤖 AI CHIẾN THẮNG! (Trí nhớ thích nghi: {cnt} bẫy)"
+
             return True
 
         if np.all(self.grid != 0):
             self.done = True
             self.winner = "draw"
             self.scores["draw"] += 1
+            if hasattr(self.opponent, "learner") and self.opponent.learner:
+                self.opponent.learner.learn_from_match("draw", self.player_symb, self.opp_symb)
             return True
 
         return False
@@ -489,6 +529,10 @@ class Connect4GUI:
 
         target_row = self._find_target_row(ai_action)
 
+        # Ghi nhận nước đi của AI vào bộ nhớ học
+        if hasattr(self.opponent, "learner") and self.opponent.learner:
+            self.opponent.learner.record_move(self.grid, self.opp_symb, ai_action)
+
         def on_ai_land():
             if not self.check_game_over(target_row, ai_action, self.opp_symb):
                 self.current_turn = "player"
@@ -509,6 +553,10 @@ class Connect4GUI:
             return
 
         target_row = self._find_target_row(col)
+
+        # Ghi nhận nước đi của người chơi vào bộ nhớ học
+        if hasattr(self.opponent, "learner") and self.opponent.learner:
+            self.opponent.learner.record_move(self.grid, self.player_symb, col)
 
         def on_player_land():
             if not self.check_game_over(target_row, col, self.player_symb):
@@ -557,6 +605,9 @@ class Connect4GUI:
                             pygame.time.set_timer(pygame.USEREVENT + 1, 400, loops=1)
                     elif event.key == pygame.K_t:
                         self.set_first_turn(not self.first_turn_player)
+                    elif event.key == pygame.K_a:
+                        self.auto_play = not getattr(self, "auto_play", False)
+                        self.auto_reset_timer = 0.0
 
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if self.done and modal_btns:
@@ -578,6 +629,27 @@ class Connect4GUI:
                         col = self.get_col_from_x(event.pos[0])
                         if col is not None:
                             self.handle_player_click(col)
+
+            # Chế độ AI Tự Đấu Tự Học (Auto-Play)
+            if getattr(self, "auto_play", False) and not self.animating_token:
+                if not self.done:
+                    if self.current_turn == "player":
+                        valid_cols = [c for c in range(self.board_cols) if self.grid[0, c] == 0]
+                        if valid_cols:
+                            try:
+                                pred = self.auto_player.predict(self.grid)
+                                col = pred[0] if isinstance(pred, (tuple, list, np.ndarray)) else pred
+                                if int(col) in valid_cols:
+                                    self.handle_player_click(int(col))
+                            except Exception:
+                                pass
+                else:
+                    self.auto_reset_timer += dt
+                    if self.auto_reset_timer >= 1.0:
+                        self.auto_reset_timer = 0.0
+                        self.reset_game()
+                        if self.current_turn == "ai":
+                            pygame.time.set_timer(pygame.USEREVENT + 1, 350, loops=1)
 
             self.update_animation(dt)
 

@@ -4,9 +4,10 @@ import random
 
 
 class MinimaxAgent:
-    def __init__(self, agent_symb=2, opp_symb=1):
+    def __init__(self, agent_symb=2, opp_symb=1, depth=2):
         self.agent_symb = agent_symb
         self.opp_symb = opp_symb
+        self.depth = depth
 
     def _is_valid_action(self, board, action):
         cols = board.shape[1]
@@ -106,7 +107,9 @@ class MinimaxAgent:
                     break
             return column, value
 
-    def predict(self, obs, depth=3):
+    def predict(self, obs, depth=None):
+        if depth is None:
+            depth = self.depth
         board = obs.copy()
         count_1 = np.sum(board == 1)
         count_2 = np.sum(board == 2)

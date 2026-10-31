@@ -40,8 +40,12 @@ def _get_target_row(grid, col):
 
 
 class EnsembleAgent:
-    def __init__(self, agents):
+    def __init__(self, agents, learner=None):
         self.agents = agents
+        self.learner = learner
+
+    def set_learner(self, learner):
+        self.learner = learner
 
     def predict(self, obs, deterministic=True):
         grid = obs.copy()
@@ -73,11 +77,25 @@ class EnsembleAgent:
                     return (c,)
                 grid[r, c] = 0
 
-        # 3. Ensemble Voting with Action Masking
+        # 3. Adaptive Learned Counter-move (Bắt bài bẫy của người chơi)
+        if self.learner is not None:
+            learned_col = self.learner.lookup_memory(grid)
+            if learned_col is not None and learned_col in valid_cols:
+                return (int(learned_col),)
+
+        # 4. Ensemble Voting with Action Masking
         predictions = []
         for agent in self.agents:
             try:
-                p = agent.predict(obs, deterministic)[0]
+                obs_input = obs
+                if hasattr(agent, "observation_space"):
+                    sp = getattr(agent.observation_space, "shape", None)
+                    if sp == (2, rows, cols):
+                        obs_input = np.stack(
+                            [(grid == my_symb).astype(np.float32), (grid == opp_symb).astype(np.float32)],
+                            axis=0,
+                        )
+                p = agent.predict(obs_input, deterministic)[0]
                 if isinstance(p, (np.ndarray, list, tuple)):
                     p = int(p[0])
                 else:

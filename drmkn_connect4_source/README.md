@@ -9,6 +9,7 @@ Dự án phát triển tác tử AI chơi cờ **Connect 4 mở rộng (8 hàng 
 - **Kích thước bàn cờ 8x9**: Không gian trạng thái $8 \times 9 = 72$ ô cờ, $9$ hành động (cột 0 - 8).
 - **Hệ thống AI đa dạng**:
   - 🧠 **Ensemble PPO Agents (Mạnh nhất)**: Kết hợp biểu quyết từ chuỗi 16 mô hình PPO được huấn luyện qua kỹ thuật Curriculum Learning.
+  - ⚡ **Học Thích Nghi Trực Tuyến (Online Continual Learning)**: AI tự động phân tích và học hỏi nước cờ của người chơi sau mỗi ván đấu, tự động nhớ bẫy và cập nhật mạng nơ-ron PPO để chặn trước trong các ván tiếp theo.
   - ⚡ **Heuristic Agent**: Đánh giá thế cờ theo kinh nghiệm, tự động chặn chuỗi 3, bắt chuỗi 4 và kiểm soát khu vực trung tâm.
   - 🔍 **Minimax Agent**: Tìm kiếm vét cạn nước đi tối ưu kết hợp cắt tỉa Alpha-Beta.
 - **Giao diện Pygame đồ họa cao cấp**:
@@ -33,6 +34,8 @@ drmkn_connect4_source/
     ├── heuristic.py                # Thuật toán Heuristic Agent
     ├── minimax.py                  # Thuật toán Minimax (Alpha-Beta Pruning)
     ├── ensemble.py                 # Thuật toán Ensemble Agent (Biểu quyết đa mô hình)
+    ├── adaptive_learner.py         # Module Tự Học Thích Nghi Trực Tuyến từ người chơi
+    ├── self_play.py                # Huấn luyện AlphaZero Self-Play + CNN 2D
     ├── train.py                    # Script huấn luyện cục bộ
     ├── test.py                     # Script đo đạc tỷ lệ thắng (Benchmark Win-rate)
     ├── requirements.txt            # Danh sách thư viện cần thiết
@@ -68,7 +71,8 @@ python play.py
 ### Cách điều khiển trong Game:
 * 🖱️ **Chuột trái**: Rê chuột qua các cột để ngắm và click để thả quân cờ đỏ (🔴).
 * 🔄 **Phím `[R]`**: Khởi động lại ván cờ mới.
-* 👥 **Phím `[T]`** hoặc nút trên góc trái: Đổi lượt (**Bạn đi trước** hoặc **AI đi trước**).
+* 👥 **Phím `[T]`**: Đổi lượt (**Bạn đi trước** hoặc **AI đi trước**).
+* ⚡ **Phím `[A]`**: **Bật/Tắt chế độ Tự Đấu Tự Học (Auto-Play)** — Hai AI sẽ tự động đấu liên tục trên màn hình và tự học thích nghi sau mỗi ván mà bạn không cần phải click chuột!
 * ❌ **Phím `[ESC]`**: Thoát khỏi game.
 
 > **💡 Cơ chế nạp AI tự động:**
@@ -77,25 +81,24 @@ python play.py
 
 ---
 
-## ☁️ 5. Hướng Dẫn Tự Huấn Luyện AI Bằng Google Colab
+## ☁️ 5. Hướng Dẫn Chạy Toàn Bộ Dự Án Trên Google Colab
 
-Nếu bạn muốn tự train lại hoặc huấn luyện thêm agent mới mà không làm nóng laptop:
+Toàn bộ dự án đã được tích hợp liên kết trực tiếp với **Google Colab** qua file `Colab_Connect4_Train.ipynb`:
 
 1. Truy cập [Google Colab](https://colab.research.google.com/).
 2. Chọn **Upload** và tải lên file **`Colab_Connect4_Train.ipynb`** (nằm ở thư mục dự án).
-3. Vào menu **Runtime** ➜ **Change runtime type** ➜ Chọn **T4 GPU** (hoặc CPU High-RAM).
-4. Bấm **Chạy tất cả (Run all)**:
-   - Colab sẽ tự động cài thư viện và kết nối Google Drive của bạn.
-   - Quá trình Curriculum Learning sẽ tự train chuỗi 16 agents (Agent sau học cách khắc chế Agent trước).
-   - Checkpoint được lưu thẳng vào Google Drive (`Connect4_Models/saved_agents_8x9`).
-5. **Tải về máy tính:**
-   - Chạy ô cuối cùng (**Bước 5**) trong notebook, trình duyệt sẽ tự động tải file `saved_agents_8x9.zip` về máy.
-   - Giải nén file zip để lấy các file con (`agent0.zip` ... `agent15.zip`).
-   - Đặt toàn bộ 16 file con này vào thư mục:
-     ```text
-     drmkn_connect4_source/drmkn_connect4_src/saved_agents_8x9/
-     ```
-   - Chạy `python play.py` trên máy tính để trải nghiệm AI vừa train!
+3. Vào menu **Runtime** ➜ **Change runtime type** ➜ Chọn **T4 GPU** (hoàn toàn miễn phí).
+4. **Các bước chạy trực tiếp trên Colab:**
+   - 🔗 **Bước 1 (Kết nối toàn diện)**: Tự động kết nối Google Drive, clone toàn bộ mã nguồn mới nhất từ GitHub và cài đặt thư viện.
+   - 📊 **Bước 2 (Kiểm thử Win-rate)**: Chạy `!python test.py all 15` để đo tỷ lệ thắng của toàn bộ 19 biến thể AI ngay trên đám mây.
+   - 🧠 **Bước 3 (Huấn luyện Curriculum PPO)**: Huấn luyện chuỗi 16 agents (tự động đồng bộ checkpoint sang Google Drive).
+   - 🚀 **Bước 4 (Huấn luyện AlphaZero Self-Play)**: Huấn luyện mạng tích chập Conv2D tự đấu qua các thế hệ.
+   - 📦 **Bước 5 (Tải về máy tính)**: Tự động nén và tải file `saved_agents_8x9.zip` về máy tính chỉ với 1 click!
+
+> 💡 **Ưu điểm khi chạy trên Colab:**
+> - Sử dụng GPU T4 mạnh mẽ, tốc độ train nhanh gấp 5-10 lần so với laptop.
+> - Checkpoints được lưu trực tiếp vào Google Drive (`Connect4_Models/saved_agents_8x9`), không lo mất dữ liệu nếu mất mạng.
+> - Máy tính của bạn hoàn toàn mát mẻ, không bị chiếm dụng CPU hay RAM.
 
 > ⚠️ **LƯU Ý QUAN TRỌNG:**  
 > Các file `agent0.zip` đến `agent15.zip` là định dạng lưu mặc định của thư viện Stable-Baselines3. **KHÔNG GIẢI NÉN** các file `agent*.zip` này ra thư mục, hãy để nguyên đuôi `.zip`.
@@ -103,8 +106,19 @@ Nếu bạn muốn tự train lại hoặc huấn luyện thêm agent mới mà 
 ---
 
 ## 📊 6. Đánh Giá Hiệu Năng & Tỷ Lệ Thắng (`test.py`)
-Để đo đạc tỷ lệ thắng của Ensemble Agent qua hàng ngàn ván đấu đối chuẩn:
+
+Dự án cung cấp 2 chế độ kiểm thử benchmark:
+
+### Chế độ 1: Kiểm thử toàn bộ tất cả Agent (`test all`)
+Kiểm thử và so sánh lần lượt 16 Agents PPO, Ensemble Agent, Heuristic và Minimax:
 ```bash
-python test.py
+python test.py all
+# Hoặc chỉ định số ván cho mỗi agent (ví dụ 10 hoặc 20 ván)
+python test.py all 15
+```
+
+### Chế độ 2: Kiểm thử tập trung Ensemble PPO mạnh nhất
+```bash
+python test.py 100
 ```
 Script sẽ tự động chạy mô phỏng không cần giao diện đồ họa và xuất tỷ lệ thắng (Win Rate) ra màn hình console.

@@ -17,6 +17,7 @@ from connect4 import Connect4
 from heuristic import HeuristicAgent
 from minimax import MinimaxAgent
 from ensemble import EnsembleAgent
+from adaptive_learner import AdaptiveOnlineLearner
 from stable_baselines3 import PPO
 from gui import Connect4GUI
 
@@ -65,10 +66,18 @@ def get_agent_for_board(rows=8, cols=9):
 
     if players_8x9:
         print(f"[8x9] Da nap EnsembleAgent 8x9 gom {len(players_8x9)} agents da train tu Colab!")
-        return EnsembleAgent(players_8x9)
+        # Kích hoạt hệ thống học thích ứng trực tuyến từ người chơi (Online Adaptive Learning)
+        primary_model = players_8x9[-1]  # agent15
+        save_path = os.path.join(agents_8x9_dir, "agent15")
+        learner = AdaptiveOnlineLearner(agent_model=primary_model, model_save_path=save_path)
+        print(f"[⚡] He thong Hoc Thich Nghi (Online Learning) da san sang! (Da nho {learner.total_learned_count} the co)")
+        return EnsembleAgent(players_8x9, learner=learner)
 
     print("[8x9] Chua co checkpoint PPO trong saved_agents_8x9. Su dung HeuristicAgent toi uu cho 8x9!")
-    return HeuristicAgent(c=0)
+    learner = AdaptiveOnlineLearner(agent_model=None)
+    heuristic = HeuristicAgent(c=0)
+    heuristic.learner = learner
+    return heuristic
 
 
 def play(opponent_factory=None, initial_rows=8, initial_cols=9):

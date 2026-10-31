@@ -21,6 +21,7 @@ class Connect4(gym.Env):
             low=0, high=2, shape=(self.rows, self.cols), dtype=np.int8
         )
         self.opp_agent = None
+        self.opp_epsilon = 0.05
         self.grid = np.zeros((self.rows, self.cols), dtype=np.int8)
 
         # Pygame variables
@@ -126,11 +127,19 @@ class Connect4(gym.Env):
         if not self.opp_agent:
             return self._get_random_action()
         else:
-            if np.random.random() < self.opp_epsilon:
+            if np.random.random() < getattr(self, "opp_epsilon", 0.05):
                 return self._get_random_action()
             else:
                 try:
-                    action = self.opp_agent.predict(self.grid, deterministic=False)[0]
+                    obs = self.grid
+                    if hasattr(self.opp_agent, "observation_space"):
+                        sp = getattr(self.opp_agent.observation_space, "shape", None)
+                        if sp and len(sp) == 3 and sp[0] == 2:
+                            obs = np.stack(
+                                [(self.grid == self.opp_symb).astype(np.float32), (self.grid == self.agent_symb).astype(np.float32)],
+                                axis=0,
+                            )
+                    action = self.opp_agent.predict(obs, deterministic=False)[0]
                     if isinstance(action, (np.ndarray, list, tuple)):
                         action = int(action[0])
                     else:
