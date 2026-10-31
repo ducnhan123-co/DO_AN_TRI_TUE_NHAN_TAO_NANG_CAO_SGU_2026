@@ -1,0 +1,51 @@
+======================================================================
+BÁO CÁO KẾT QUẢ HUẤN LUYỆN 8 CẤP ĐỘ CONNECT 4 (BÀN 8x9)
+Đồ Án: Trí Tuệ Nhân Tạo Nâng Cao - SGU 2026
+Thời gian hoàn thành: 2 phút 20 giây
+Số bước mỗi cấp độ: 200 steps
+======================================================================
+
+1. Cấp 1: Random Agent
+   - Trạng thái: SẴN SÀNG
+   - Thuật toán: Uniform Random Decision
+   - Tập tin: saved_agents_8x9/level1_random.json
+
+2. Cấp 2: Heuristic Agent
+   - Trạng thái: SẴN SÀNG
+   - Thuật toán: Rule-based Heuristic + Strategic Center Bias
+   - Tập tin: saved_agents_8x9/level2_heuristic.json
+
+3. Cấp 3: Minimax Agent
+   - Trạng thái: SẴN SÀNG
+   - Thuật toán: Alpha-Beta Pruning Minimax (Depth 3)
+   - Tập tin: saved_agents_8x9/level3_minimax.json
+
+4. Cấp 4: Monte Carlo Tree Search (MCTS)
+   - Trạng thái: SẴN SÀNG
+   - Thuật toán: MCTS UCT 4 Pha (Selection, Expansion, Rollout, Backprop)
+   - Tập tin: saved_agents_8x9/level4_mcts.json
+
+5. Cấp 5: Học Có Giám Sát (Supervised Learning)
+   - Trạng thái: ĐÃ HUẤN LUYỆN (200 steps)
+   - Kiến trúc: Deep Conv2D (3 channels -> 64 -> 128 -> 128 -> FC 256 -> 9)
+   - Tập tin: saved_agents_8x9/level5_supervised.pth
+
+6. Cấp 6: Học Tăng Cường (Reinforcement Learning - PPO)
+   - Trạng thái: ĐÃ HUẤN LUYỆN (200 timesteps)
+   - Môi trường: Connect4 Gym Environment (8x9)
+   - Tập tin: saved_agents_8x9/level6_rl_ppo.zip
+
+7. Cấp 7: AlphaZero Foundation
+   - Trạng thái: ĐÃ HUẤN LUYỆN (200 timesteps)
+   - Kiến trúc: Conv2D Feature Extractor + Policy-Value Head + PUCT MCTS
+   - Tập tin: saved_agents_8x9/level7_alphazero.zip
+
+8. Cấp 8: AlphaZero Master (Self-Play League)
+   - Trạng thái: ĐÃ HUẤN LUYỆN (200 timesteps)
+   - Cơ chế: Historical League Opponent Pool + Tactical Lookahead + Online Learning
+   - Tập tin: saved_agents_8x9/level8_alphazero_master.zip
+
+======================================================================
+TẤT CẢ 8 CẤP ĐỘ ĐÃ ĐƯỢC TÍCH HỢP ĐẦY ĐỦ VÀO GIAO DIỆN GUI (play.py)
+Người dùng có thể chọn trực tiếp Cấp 1 -> Cấp 8 ngay trên màn hình!
+======================================================================

@@ -1,0 +1,7 @@
+{
+    "level": 1,
+    "name": "Cấp 1: Random (Ngẫu nhiên)",
+    "description": "Ra quyết định ngẫu nhiên trong các cột hợp lệ chưa đầy.",
+    "type": "Algorithmic / Uniform Random",
+    "status": "Ready"
+}

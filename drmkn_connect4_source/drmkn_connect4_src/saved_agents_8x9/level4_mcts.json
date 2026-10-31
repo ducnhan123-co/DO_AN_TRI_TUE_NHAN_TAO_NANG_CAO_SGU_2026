@@ -1,0 +1,9 @@
+{
+    "level": 4,
+    "name": "Cấp 4: Monte Carlo (MCTS)",
+    "description": "Mô phỏng ngẫu nhiên Monte Carlo Tree Search (Selection, Expansion, Rollout, Backprop).",
+    "type": "Monte Carlo Tree Search (UCT)",
+    "simulations_per_move": 200,
+    "c_param": 1.414,
+    "status": "Ready"
+}

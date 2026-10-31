@@ -1,0 +1,12 @@
+{
+    "level": 2,
+    "name": "Cấp 2: Heuristic (Luật kinh nghiệm)",
+    "description": "Đánh giá thế trận bằng hàm điểm cục bộ, bắt 4 và chặn 3 tức thời.",
+    "type": "Rule-based Heuristic",
+    "weights": {
+        "win": 10000,
+        "block": 9000,
+        "center_weight": 6
+    },
+    "status": "Ready"
+}

@@ -1,0 +1,8 @@
+{
+    "level": 3,
+    "name": "Cấp 3: Minimax (Alpha-Beta)",
+    "description": "Duyệt cây trạng thái Minimax với cắt tỉa Alpha-Beta và hàm định giá nút lá.",
+    "type": "Adversarial Search / Minimax with Alpha-Beta",
+    "default_depth": 3,
+    "status": "Ready"
+}

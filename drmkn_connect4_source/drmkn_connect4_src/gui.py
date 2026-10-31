@@ -64,16 +64,21 @@ def get_winning_coords(grid, piece):
 
 
 class Connect4GUI:
-    def __init__(self, opponent_factory=None, initial_rows=8, initial_cols=9):
+    def __init__(self, opponent_factory=None, initial_rows=8, initial_cols=9, initial_level=8):
         """
         Giao diện đồ họa Connect 4 chuẩn kích thước 8 hàng x 9 cột.
-        opponent_factory: Hàm nhận vào (rows, cols) và trả về đối tượng opponent agent tương ứng
+        Tích hợp chuyển đổi trực tiếp 8 Cấp độ AI (Cấp 1 -> Cấp 8) theo yêu cầu Đồ án!
         """
         self.opponent_factory = opponent_factory
         self.board_rows = 8
         self.board_cols = 9
+        self.current_level = initial_level
+
         if self.opponent_factory:
-            self.opponent = self.opponent_factory(self.board_rows, self.board_cols)
+            try:
+                self.opponent = self.opponent_factory(level=self.current_level, rows=self.board_rows, cols=self.board_cols)
+            except TypeError:
+                self.opponent = self.opponent_factory(self.board_rows, self.board_cols)
         else:
             self.opponent = HeuristicAgent(c=0)
 
@@ -82,20 +87,21 @@ class Connect4GUI:
 
         # Display config gọn gàng, vừa vặn mọi màn hình laptop (không tràn màn hình)
         self.win_width = 800
-        self.win_height = 690
+        self.win_height = 705
         self._calculate_board_geometry()
 
         pygame.init()
         pygame.font.init()
         self.screen = pygame.display.set_mode((self.win_width, self.win_height))
-        pygame.display.set_caption("Connect 4 - AI Strategy Arena (Bàn cờ 8x9)")
+        pygame.display.set_caption("Connect 4 - AI Strategy Arena (8 Cấp Độ AI - Bàn 8x9)")
         self.clock = pygame.time.Clock()
 
         # Fonts cân đối cho màn hình laptop
-        self.font_title = pygame.font.SysFont(["segoeui", "calibri", "arial"], 22, bold=True)
-        self.font_sub = pygame.font.SysFont(["segoeui", "calibri", "arial"], 13, bold=True)
-        self.font_toggle = pygame.font.SysFont(["segoeui", "calibri", "arial"], 12, bold=True)
-        self.font_score = pygame.font.SysFont(["segoeui", "calibri", "arial"], 17, bold=True)
+        self.font_title = pygame.font.SysFont(["segoeui", "calibri", "arial"], 21, bold=True)
+        self.font_sub = pygame.font.SysFont(["segoeui", "calibri", "arial"], 12, bold=True)
+        self.font_toggle = pygame.font.SysFont(["segoeui", "calibri", "arial"], 11, bold=True)
+        self.font_lvl_btn = pygame.font.SysFont(["segoeui", "calibri", "arial"], 10, bold=True)
+        self.font_score = pygame.font.SysFont(["segoeui", "calibri", "arial"], 16, bold=True)
         self.font_status = pygame.font.SysFont(["segoeui", "calibri", "arial"], 13, bold=True)
         self.font_btn = pygame.font.SysFont(["segoeui", "calibri", "arial"], 14, bold=True)
         self.font_modal_title = pygame.font.SysFont(["segoeui", "calibri", "arial"], 24, bold=True)
@@ -106,6 +112,33 @@ class Connect4GUI:
 
         self.reset_game()
 
+    def get_level_name(self, level):
+        names = {
+            1: "Cấp 1: Random (Ngẫu nhiên)",
+            2: "Cấp 2: Heuristic (Kinh nghiệm)",
+            3: "Cấp 3: Minimax (Alpha-Beta)",
+            4: "Cấp 4: Monte Carlo (MCTS)",
+            5: "Cấp 5: Học Có Giám Sát (CNN)",
+            6: "Cấp 6: Học Tăng Cường (PPO)",
+            7: "Cấp 7: AlphaZero (CNN + PUCT)",
+            8: "Cấp 8: AlphaZero Master",
+        }
+        return names.get(level, f"Cấp {level}")
+
+    def set_level(self, level):
+        level = max(1, min(8, int(level)))
+        if level != self.current_level or self.opponent is None:
+            self.current_level = level
+            if self.opponent_factory:
+                try:
+                    self.opponent = self.opponent_factory(level=level, rows=self.board_rows, cols=self.board_cols)
+                except TypeError:
+                    self.opponent = self.opponent_factory(self.board_rows, self.board_cols)
+            self.adaptive_msg = f"⭐ ĐÃ ĐỔI ĐỐI THỦ: {self.get_level_name(level).upper()}"
+            self.reset_game()
+            if self.current_turn == "ai":
+                pygame.time.set_timer(pygame.USEREVENT + 1, 400, loops=1)
+
     def _calculate_board_geometry(self):
         """Tính toán kích thước ô cờ và vị trí bàn cờ gọn gàng cho 8 hàng x 9 cột."""
         self.cell_size = 58
@@ -113,7 +146,8 @@ class Connect4GUI:
         self.board_w = self.board_cols * self.cell_size + 30
         self.board_h = self.board_rows * self.cell_size + 24
         self.board_x = (self.win_width - self.board_w) // 2
-        self.board_y = 160
+        self.board_y = 172
+
 
     def reset_game(self):
         """Khởi động lại ván cờ với kích thước 8x9."""
@@ -170,50 +204,89 @@ class Connect4GUI:
 
     def draw_header(self):
         mouse_pos = pygame.mouse.get_pos()
-        header_h = 142
-        header_rect = pygame.Rect(self.board_x, 10, self.board_w, header_h)
+        header_h = 146
+        header_rect = pygame.Rect(self.board_x, 8, self.board_w, header_h)
         pygame.draw.rect(self.screen, COLOR_BG_CARD, header_rect, border_radius=14)
         pygame.draw.rect(self.screen, (51, 65, 85), header_rect, width=2, border_radius=14)
 
-        # 1. Title & Opponent
+        # 1. Title & Active Level Badge
         title_txt = self.font_title.render("CONNECT 4", True, COLOR_TEXT_PRIMARY)
-        self.screen.blit(title_txt, (self.board_x + 16, 14))
+        self.screen.blit(title_txt, (self.board_x + 14, 12))
 
-        opp_name = self.opponent.__class__.__name__ if self.opponent else "Random AI"
-        if opp_name == "HeuristicAgent":
-            opp_name = "Heuristic AI"
-        elif "PPO" in opp_name or "Ensemble" in opp_name:
-            opp_name = "PPO Neural AI"
-
-        badge_txt = self.font_sub.render(f"VS {opp_name.upper()} ({self.board_rows}x{self.board_cols})", True, COLOR_ACCENT_CYAN)
-        self.screen.blit(badge_txt, (self.board_x + 18, 40))
+        lvl_full_name = self.get_level_name(self.current_level)
+        badge_txt = self.font_sub.render(f"VS {lvl_full_name.upper()}", True, COLOR_ACCENT_CYAN)
+        self.screen.blit(badge_txt, (self.board_x + 124, 17))
 
         # 2. Scoreboard Widgets
-        score_x = self.board_x + self.board_w - 240
+        score_x = self.board_x + self.board_w - 225
         p_col = COLOR_RED_MAIN if self.player_symb == 1 else COLOR_YELLOW_MAIN
-        pygame.draw.circle(self.screen, p_col, (score_x + 8, 32), 6)
+        pygame.draw.circle(self.screen, p_col, (score_x + 6, 26), 5)
         p_lbl = self.font_sub.render("BẠN", True, COLOR_TEXT_MUTED)
-        self.screen.blit(p_lbl, (score_x + 18, 16))
+        self.screen.blit(p_lbl, (score_x + 15, 12))
         p_val = self.font_score.render(str(self.scores["player"]), True, COLOR_TEXT_PRIMARY)
-        self.screen.blit(p_val, (score_x + 18, 32))
+        self.screen.blit(p_val, (score_x + 15, 26))
 
         d_lbl = self.font_sub.render("HÒA", True, COLOR_TEXT_MUTED)
-        self.screen.blit(d_lbl, (score_x + 88, 16))
+        self.screen.blit(d_lbl, (score_x + 80, 12))
         d_val = self.font_score.render(str(self.scores["draw"]), True, COLOR_TEXT_PRIMARY)
-        self.screen.blit(d_val, (score_x + 88, 32))
+        self.screen.blit(d_val, (score_x + 80, 26))
 
         ai_col = COLOR_YELLOW_MAIN if self.player_symb == 1 else COLOR_RED_MAIN
-        pygame.draw.circle(self.screen, ai_col, (score_x + 158, 32), 6)
+        pygame.draw.circle(self.screen, ai_col, (score_x + 145, 26), 5)
         ai_lbl = self.font_sub.render("AI", True, COLOR_TEXT_MUTED)
-        self.screen.blit(ai_lbl, (score_x + 168, 16))
+        self.screen.blit(ai_lbl, (score_x + 154, 12))
         ai_val = self.font_score.render(str(self.scores["ai"]), True, COLOR_TEXT_PRIMARY)
-        self.screen.blit(ai_val, (score_x + 168, 32))
+        self.screen.blit(ai_val, (score_x + 154, 26))
 
-        # 3. SELECTOR ROW: Turn buttons & Board Size Badge
-        btn_h = 28
-        btn_w_turn = 120
-        btn_player_rect = pygame.Rect(self.board_x + 14, 66, btn_w_turn, btn_h)
-        btn_ai_rect = pygame.Rect(self.board_x + 14 + btn_w_turn + 8, 66, btn_w_turn, btn_h)
+        # 3. LEVEL SELECTOR ROW (8 CẤP ĐỘ AI THEO YÊU CẦU ĐỒ ÁN)
+        level_btns = {}
+        lvl_labels = {
+            1: "1: Rnd",
+            2: "2: Heu",
+            3: "3: Min",
+            4: "4: MCT",
+            5: "5: SL",
+            6: "6: RL",
+            7: "7: A0",
+            8: "8: AZ*",
+        }
+        btn_y = 45
+        btn_h_lvl = 23
+        inner_w = self.board_w - 24
+        btn_w_lvl = (inner_w - (7 * 4)) // 8
+
+        for i in range(1, 9):
+            bx = self.board_x + 12 + (i - 1) * (btn_w_lvl + 4)
+            b_rect = pygame.Rect(bx, btn_y, btn_w_lvl, btn_h_lvl)
+            level_btns[i] = b_rect
+
+            is_active = (i == self.current_level)
+            is_hover = b_rect.collidepoint(mouse_pos)
+
+            if is_active:
+                bg_col = (6, 182, 212) if i < 8 else (250, 204, 21)
+                text_col = (15, 23, 42)
+                border_col = (255, 255, 255)
+            elif is_hover:
+                bg_col = (51, 65, 85)
+                text_col = (248, 250, 252)
+                border_col = (148, 163, 184)
+            else:
+                bg_col = (24, 34, 53)
+                text_col = (148, 163, 184)
+                border_col = (40, 53, 76)
+
+            pygame.draw.rect(self.screen, bg_col, b_rect, border_radius=5)
+            pygame.draw.rect(self.screen, border_col, b_rect, width=1, border_radius=5)
+            t_lbl = self.font_lvl_btn.render(lvl_labels[i], True, text_col)
+            self.screen.blit(t_lbl, (b_rect.centerx - t_lbl.get_width() // 2, b_rect.centery - t_lbl.get_height() // 2))
+
+        # 4. SELECTOR ROW: Turn buttons & Board Size Badge
+        btn_h = 26
+        btn_w_turn = 115
+        row4_y = 73
+        btn_player_rect = pygame.Rect(self.board_x + 12, row4_y, btn_w_turn, btn_h)
+        btn_ai_rect = pygame.Rect(self.board_x + 12 + btn_w_turn + 8, row4_y, btn_w_turn, btn_h)
 
         # Draw Player First
         is_player_first = self.first_turn_player
@@ -233,8 +306,8 @@ class Connect4GUI:
 
         # Adaptive Learning Status Badge
         badge_adapt_w = 135
-        badge_adapt_x = self.board_x + 14 + (btn_w_turn * 2) + 16
-        badge_adapt_rect = pygame.Rect(badge_adapt_x, 66, badge_adapt_w, btn_h)
+        badge_adapt_x = self.board_x + 12 + (btn_w_turn * 2) + 14
+        badge_adapt_rect = pygame.Rect(badge_adapt_x, row4_y, badge_adapt_w, btn_h)
         pygame.draw.rect(self.screen, (15, 23, 42), badge_adapt_rect, border_radius=6)
         pygame.draw.rect(self.screen, (16, 185, 129), badge_adapt_rect, width=1, border_radius=6)
         learned_count = 0
@@ -245,15 +318,15 @@ class Connect4GUI:
 
         # Board Size Info Badge (Dedicated 8x9)
         badge_w = 110
-        badge_x = self.board_x + self.board_w - badge_w - 14
-        badge_rect = pygame.Rect(badge_x, 66, badge_w, btn_h)
+        badge_x = self.board_x + self.board_w - badge_w - 12
+        badge_rect = pygame.Rect(badge_x, row4_y, badge_w, btn_h)
         pygame.draw.rect(self.screen, (30, 41, 59), badge_rect, border_radius=6)
         pygame.draw.rect(self.screen, (59, 130, 246), badge_rect, width=1, border_radius=6)
         t_badge = self.font_toggle.render("⊞ Cờ 8x9", True, (147, 197, 253))
         self.screen.blit(t_badge, (badge_rect.centerx - t_badge.get_width() // 2, badge_rect.centery - t_badge.get_height() // 2))
 
-        # 4. Status Banner
-        status_bar = pygame.Rect(self.board_x + 14, 102, self.board_w - 28, 30)
+        # 5. Status Banner
+        status_bar = pygame.Rect(self.board_x + 12, 105, self.board_w - 24, 28)
         if not self.done:
             if self.current_turn == "player":
                 bar_col = (22, 101, 52)
@@ -292,6 +365,7 @@ class Connect4GUI:
         return {
             "btn_player_first": btn_player_rect,
             "btn_ai_first": btn_ai_rect,
+            "level_btns": level_btns,
         }
 
     def draw_board(self):
@@ -366,13 +440,13 @@ class Connect4GUI:
             )
         else:
             footer_txt = self.font_sub.render(
-                "[R]: Ván mới  |  [T]: Đổi lượt  |  [A]: Bật AI Tự Đấu Tự Học  |  [ESC]: Thoát",
+                "[1-8]: Đổi Cấp Độ AI  |  [R]: Ván mới  |  [T]: Đổi lượt  |  [A]: Tự Đấu  |  [ESC]: Thoát",
                 True,
                 (148, 163, 184),
             )
         self.screen.blit(
             footer_txt,
-            (self.win_width // 2 - footer_txt.get_width() // 2, self.win_height - 24),
+            (self.win_width // 2 - footer_txt.get_width() // 2, self.win_height - 22),
         )
 
     def draw_modal(self):
@@ -599,6 +673,9 @@ class Connect4GUI:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         running = False
+                    elif pygame.K_1 <= event.key <= pygame.K_8:
+                        new_lvl = event.key - pygame.K_0
+                        self.set_level(new_lvl)
                     elif event.key == pygame.K_r:
                         self.reset_game()
                         if self.current_turn == "ai":
@@ -619,6 +696,17 @@ class Connect4GUI:
                             running = False
                     else:
                         if header_btns:
+                            # Kiểm tra click vào nút chọn Cấp độ 1..8
+                            clicked_lvl = False
+                            if "level_btns" in header_btns:
+                                for lvl_idx, b_rect in header_btns["level_btns"].items():
+                                    if b_rect.collidepoint(event.pos):
+                                        self.set_level(lvl_idx)
+                                        clicked_lvl = True
+                                        break
+                            if clicked_lvl:
+                                continue
+
                             if header_btns["btn_player_first"].collidepoint(event.pos):
                                 self.set_first_turn(True)
                                 continue

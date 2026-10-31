@@ -247,7 +247,16 @@ def run_benchmark(num_games=1000):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1].lower() in ["all", "--all", "-a"]:
+    if len(sys.argv) > 1 and sys.argv[1].lower() in ["levels", "--levels", "-l"]:
+        from test_8_levels import benchmark_all_8_levels
+        games = 10
+        if len(sys.argv) > 2:
+            try:
+                games = int(sys.argv[2])
+            except ValueError:
+                pass
+        benchmark_all_8_levels(num_games=games)
+    elif len(sys.argv) > 1 and sys.argv[1].lower() in ["all", "--all", "-a"]:
         games = 15
         if len(sys.argv) > 2:
             try:
