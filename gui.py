@@ -12,7 +12,7 @@ import time
 import pygame  
 import pygame.gfxdraw  
 
-from c4core import COLS, H, ROWS, bb_to_grid, drop_bit, has_won, is_full  
+from c4core import COLS, H, ROWS, TacticalPlayer, bb_to_grid, drop_bit, has_won, is_full  
 
 # ---------------------------------------------------------------- màu sắc
 BG, PANEL, BORDER = (15, 19, 38), (26, 32, 56), (46, 54, 88)
@@ -56,7 +56,7 @@ class App:
     PAD, BM = 20, 14
 
     def __init__(self, opponent, subtitle, me=None, labels=("BẠN", "AI"), cell=0, a_first=True,
-                 can_switch=None, ai_delay=0.45, headless=False):
+                 can_switch=None, ai_delay=0.45, on_level=None, headless=False):
         pygame.init()
         pygame.display.set_caption(f"Connect 4 - AI Strategy Arena (Bàn cờ {ROWS}x{COLS})")
         info = pygame.display.Info()
@@ -66,7 +66,7 @@ class App:
         self.cell_arg, self.cell = cell, cell
         self.opponent, self.me, self.subtitle = opponent, me, subtitle
         self.lab_a, self.lab_b = labels
-        self.can_switch, self.ai_delay = can_switch, ai_delay
+        self.can_switch, self.ai_delay, self.on_level = can_switch, ai_delay, on_level
         self.a_first, self.headless = a_first, headless
         self.switch_to = None
         self.GH = int(cell * 0.9)
@@ -150,12 +150,29 @@ class App:
             self._apply(col)
 
     def ai_move(self):
+        """AI đi một nước. Agent ném lỗi hoặc trả nước không hợp lệ (cột âm / ngoài bàn / đã đầy)
+        => KHÔNG sập chương trình: báo trên thanh trạng thái và dùng nước dự phòng của bot Tactical."""
         player = self.me if self.turn == self.a_idx else self.opponent
         me, opp = self.bbs[self.turn], self.bbs[1 - self.turn]
-        a = int(player.act(me, opp))
-        if not drop_bit(me | opp, a):  # phòng hờ: nước sai -> cột hợp lệ đầu tiên
-            a = next(c for c in range(COLS) if drop_bit(me | opp, c))
+        try:
+            a = int(player.act(me, opp))
+            if not drop_bit(me | opp, a):
+                raise ValueError(f"nước không hợp lệ (cột {a})")
+            self.message = None
+        except Exception as e:  # noqa: BLE001 - agent ngoài có thể ném bất kỳ lỗi gì
+            self.message = f"AI lỗi ({type(e).__name__}) - dùng nước dự phòng"
+            a = TacticalPlayer().act(me, opp)
         self._apply(a)
+
+    def change_level(self, n):
+        """Đổi cấp độ đối thủ (phím 1-8). Cấp chưa train / lỗi nạp -> báo trên thanh trạng thái, giữ nguyên đối thủ cũ."""
+        res = self.on_level(n)
+        if isinstance(res, str):
+            self.message = res
+            return
+        self.opponent, self.subtitle = res
+        self.score = dict(a=0, draw=0, b=0)
+        self.new_game()
 
     def try_switch_board(self):
         nr, nc = (6, 7) if (ROWS, COLS) == (8, 9) else (8, 9)
@@ -283,6 +300,8 @@ class App:
                         return None
                     if ev.key in (pygame.K_r, pygame.K_SPACE, pygame.K_RETURN):
                         self.new_game()
+                    elif self.on_level and pygame.K_1 <= ev.key <= pygame.K_8:
+                        self.change_level(ev.key - pygame.K_0)
                 elif ev.type == pygame.MOUSEMOTION:
                     in_panel = self.panel_y <= ev.pos[1] <= self.panel_y + self.panel_h
                     self.hover = self.col_at(ev.pos[0]) if in_panel else None

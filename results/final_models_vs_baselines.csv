@@ -1,0 +1,32 @@
+model,opponent,games,win,draw,loss
+v2 6x7 (agent_6x7.zip),random,100,100,0,0
+v2 6x7 (agent_6x7.zip),tactical,100,82,6,12
+v2 6x7 (agent_6x7.zip),heuristic_cu,100,73,2,25
+v2 6x7 (agent_6x7.zip),minimax2,100,15,24,61
+v2 6x7 (agent_6x7.zip),minimax4,60,14,4,42
+v2 6x7 (agent_6x7.zip),minimax6,30,5,3,22
+v2 6x7 (agent_6x7.zip),agent15_cu,100,100,0,0
+v2 6x7 (agent_6x7.zip),ensemble_cu(0-14),100,98,0,2
+v2 8x9 train tu dau (agent_8x9.zip),random,60,60,0,0
+v2 8x9 train tu dau (agent_8x9.zip),tactical,60,47,0,13
+v2 8x9 train tu dau (agent_8x9.zip),minimax2,60,25,0,35
+v2 8x9 train tu dau (agent_8x9.zip),minimax4,60,12,0,48
+v2 8x9 train tu dau (agent_8x9.zip),minimax6,20,1,0,19
+8x9 chuyen giao tu 6x7 (khong ship),tactical,60,46,0,14
+8x9 chuyen giao tu 6x7 (khong ship),minimax2,60,15,0,45
+8x9 chuyen giao tu 6x7 (khong ship),minimax4,60,19,1,40
+8x9 chuyen giao tu 6x7 (khong ship),agent_8x9_tu_dau,100,24,0,76
+v2 8x9 + search d2 (lai),random,60,60,0,0
+v2 8x9 + search d2 (lai),tactical,60,50,0,10
+v2 8x9 + search d2 (lai),minimax2,60,34,0,26
+v2 8x9 + search d2 (lai),minimax4,60,16,0,44
+v2 8x9 + search d2 (lai),minimax6,60,2,0,18
+v2 8x9 + search d4 (lai),random,60,60,0,0
+v2 8x9 + search d4 (lai),tactical,60,55,1,4
+v2 8x9 + search d4 (lai),minimax2,60,42,1,17
+v2 8x9 + search d4 (lai),minimax4,60,33,2,25
+v2 8x9 + search d4 (lai),minimax6,20,5,0,15
+v2 8x9 + search d6 (lai),random,40,40,0,0
+v2 8x9 + search d6 (lai),tactical,40,39,0,1
+v2 8x9 + search d6 (lai),minimax2,40,34,0,6
+v2 8x9 + search d6 (lai),minimax4,40,22,0,18

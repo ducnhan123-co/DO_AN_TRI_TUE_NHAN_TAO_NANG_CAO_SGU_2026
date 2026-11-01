@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+# Kết quả train (lớn, tái tạo được)
+runs/
+*.log
+# Công cụ / IDE
+.serena/
+.vscode/
+.idea/
+.DS_Store
+# Dữ liệu trung gian khi train thang cấp độ (lớn, tái tạo được)
+levels/*/sl_data.npz
+levels/*/az_buffer.npz
+levels/*/az_state.pt
+levels/*/rl_run/

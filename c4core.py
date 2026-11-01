@@ -51,7 +51,9 @@ def has_won(bb: int) -> bool:
 
 
 def drop_bit(mask: int, col: int) -> int:
-    """Bit của ô mà quân sẽ rơi vào; 0 nếu cột đầy."""
+    """Bit của ô mà quân sẽ rơi vào; 0 nếu cột đầy HOẶC cột nằm ngoài bàn (không để chỉ số âm lọt qua)."""
+    if not 0 <= col < COLS:
+        return 0
     return (mask + BOT[col]) & COLMASK[col]
 
 
@@ -61,6 +63,13 @@ def legal_cols(mask: int):
 
 def legal_mask(mask: int) -> np.ndarray:
     return np.array([(mask >> (c * H + ROWS - 1)) & 1 == 0 for c in range(COLS)])
+
+
+def _require_moves(mask: int):
+    cols = legal_cols(mask)
+    if not cols:
+        raise ValueError("Bàn cờ đã đầy, không còn nước đi hợp lệ")
+    return cols
 
 
 def is_full(mask: int) -> bool:
@@ -222,9 +231,25 @@ def minimax_move(me: int, opp: int, depth: int, rng: np.random.Generator | None 
             best, best_cols, alpha = s, [c], s - 1
         elif s == best:
             best_cols.append(c)
+    if not best_cols:
+        raise ValueError("Bàn cờ đã đầy, không còn nước đi hợp lệ")
     if rng is None or len(best_cols) == 1:
         return best_cols[0]
     return int(best_cols[rng.integers(len(best_cols))])
+
+
+def minimax_scores(me: int, opp: int, depth: int) -> dict:
+    """Điểm negamax CHÍNH XÁC (cửa sổ đầy đủ) của từng nước hợp lệ ở gốc: {cột: điểm}."""
+    mask = me | opp
+    out = {}
+    for c in COL_ORDER:
+        mv = drop_bit(mask, c)
+        if not mv:
+            continue
+        out[c] = WIN if has_won(me | mv) else -_negamax(opp, me | mv, depth - 1, -INF, INF, 1)
+    if not out:
+        raise ValueError("Bàn cờ đã đầy, không còn nước đi hợp lệ")
+    return out
 
 
 # --------------------------------------------------------------------------- người chơi
@@ -235,7 +260,7 @@ class RandomPlayer:
         self.rng = np.random.default_rng(seed)
 
     def act(self, me, opp):
-        cols = legal_cols(me | opp)
+        cols = _require_moves(me | opp)
         return int(cols[self.rng.integers(len(cols))])
 
 
@@ -250,6 +275,7 @@ class TacticalPlayer:
 
     def act(self, me, opp):
         mask = me | opp
+        _require_moves(mask)
         if self.rng.random() < self.eps:
             cols = legal_cols(mask)
             return int(cols[self.rng.integers(len(cols))])
@@ -262,6 +288,29 @@ class TacticalPlayer:
         return int(cols[self.rng.choice(len(cols), p=w / w.sum())])
 
 
+class HeuristicPlayer:
+    """Cấp 2 - heuristic 1 nước (không tìm kiếm): thắng ngay > chặn ngay > tránh tặng thắng, rồi chọn nước
+    làm hàm đánh giá bàn cờ (giữa bàn + số 'ba quân mở') cao nhất. Có nhiễu nhỏ để không giống hệt mỗi ván."""
+
+    name = "heuristic"
+
+    def __init__(self, eps=0.03, seed=None):
+        self.eps = eps
+        self.rng = np.random.default_rng(seed)
+
+    def act(self, me, opp):
+        mask = me | opp
+        cols = _require_moves(mask)
+        if self.eps and self.rng.random() < self.eps:
+            return int(cols[self.rng.integers(len(cols))])
+        o = tactical_override(me, opp)
+        if o is not None:
+            return o
+        cols = safe_cols(me, opp) or cols
+        scores = [evaluate(me | drop_bit(mask, c), opp) + self.rng.random() for c in cols]
+        return int(cols[int(np.argmax(scores))])
+
+
 class MinimaxPlayer:
     def __init__(self, depth=4, eps=0.0, seed=None):
         self.depth, self.eps = depth, eps
@@ -270,7 +319,7 @@ class MinimaxPlayer:
 
     def act(self, me, opp):
         if self.eps and self.rng.random() < self.eps:
-            cols = legal_cols(me | opp)
+            cols = _require_moves(me | opp)
             return int(cols[self.rng.integers(len(cols))])
         return minimax_move(me, opp, self.depth, self.rng)
 
@@ -315,6 +364,8 @@ def play_game(p_first, p_second, rng=None, opening_plies=0):
 
 def match(a, b, n_games=40, opening_plies=2, seed=0):
     """a đấu b, đổi bên luân phiên. Trả về dict thống kê từ góc nhìn của a."""
+    if n_games < 1:
+        raise ValueError(f"n_games phải >= 1 (nhận {n_games})")
     rng = np.random.default_rng(seed)
     w = d = l = ia = ib = 0
     for g in range(n_games):

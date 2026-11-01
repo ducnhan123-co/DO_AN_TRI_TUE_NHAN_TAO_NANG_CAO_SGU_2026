@@ -1,0 +1,32 @@
+board,level,name,opponent,games,win,draw,loss,score
+8x9,1,Random,random,20,8,0,12,0.4
+8x9,1,Random,minimax2,20,0,0,20,0.0
+8x9,1,Random,minimax4,20,0,0,20,0.0
+8x9,2,Heuristic,random,20,20,0,0,1.0
+8x9,2,Heuristic,minimax2,20,5,0,15,0.25
+8x9,2,Heuristic,minimax4,20,2,0,18,0.1
+8x9,2,Heuristic,cap_duoi,20,20,0,0,1.0
+8x9,3,Minimax,random,20,20,0,0,1.0
+8x9,3,Minimax,minimax2,20,10,0,10,0.5
+8x9,3,Minimax,minimax4,20,9,0,11,0.45
+8x9,3,Minimax,cap_duoi,20,17,0,3,0.85
+8x9,4,Monte Carlo (MCTS),random,20,20,0,0,1.0
+8x9,4,Monte Carlo (MCTS),minimax2,20,15,0,5,0.75
+8x9,4,Monte Carlo (MCTS),minimax4,20,14,0,6,0.7
+8x9,4,Monte Carlo (MCTS),cap_duoi,20,12,0,8,0.6
+8x9,5,Học có giám sát,random,20,20,0,0,1.0
+8x9,5,Học có giám sát,minimax2,20,9,2,9,0.5
+8x9,5,Học có giám sát,minimax4,20,3,1,16,0.175
+8x9,5,Học có giám sát,cap_duoi,20,2,0,18,0.1
+8x9,6,Học tăng cường (PPO),random,20,20,0,0,1.0
+8x9,6,Học tăng cường (PPO),minimax2,20,5,0,15,0.25
+8x9,6,Học tăng cường (PPO),minimax4,20,3,0,17,0.15
+8x9,6,Học tăng cường (PPO),cap_duoi,20,9,0,11,0.45
+8x9,7,AlphaZero (100 mô phỏng),random,20,20,0,0,1.0
+8x9,7,AlphaZero (100 mô phỏng),minimax2,20,11,0,9,0.55
+8x9,7,AlphaZero (100 mô phỏng),minimax4,20,5,0,15,0.25
+8x9,7,AlphaZero (100 mô phỏng),cap_duoi,20,15,0,5,0.75
+8x9,8,AlphaZero (800 mô phỏng),random,20,20,0,0,1.0
+8x9,8,AlphaZero (800 mô phỏng),minimax2,20,13,0,7,0.65
+8x9,8,AlphaZero (800 mô phỏng),minimax4,20,4,2,14,0.25
+8x9,8,AlphaZero (800 mô phỏng),cap_duoi,20,18,0,2,0.9

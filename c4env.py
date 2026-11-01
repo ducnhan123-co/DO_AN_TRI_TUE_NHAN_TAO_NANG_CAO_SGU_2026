@@ -16,7 +16,9 @@ import copy
 import gymnasium as gym
 import numpy as np
 import torch
+import torch.nn as nn
 from gymnasium import spaces
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 from c4core import (
     COLS,
@@ -30,6 +32,7 @@ from c4core import (
     is_full,
     legal_mask,
     sensible_mask,
+    minimax_scores,
     mirror_cols,
     safe_cols,
     tactical_override,
@@ -37,34 +40,107 @@ from c4core import (
 )
 
 
+# --------------------------------------------------------------------------- mạng CNN (để ở module cố định)
+# Lưu ý: class trong policy_kwargs được pickle THEO TÊN MODULE. Nếu để trong train_v2.py (chạy như __main__)
+# thì file model chỉ nạp được khi chạy đúng script đó. Đặt ở đây => nạp được từ mọi nơi.
+class _Res(nn.Module):
+    def __init__(self, c):
+        super().__init__()
+        self.net = nn.Sequential(nn.Conv2d(c, c, 3, padding=1), nn.ReLU(), nn.Conv2d(c, c, 3, padding=1))
+
+    def forward(self, x):
+        return torch.relu(x + self.net(x))
+
+
+class C4Extractor(BaseFeaturesExtractor):
+    """CNN nhỏ cho bàn 2xROWSxCOLS. Tích chập 3x3 hợp với bài toán vì 'bốn quân thẳng hàng'
+    là mẫu cục bộ lặp lại ở mọi vị trí."""
+
+    def __init__(self, observation_space: spaces.Box, channels=64, n_res=2, features_dim=256):
+        super().__init__(observation_space, features_dim)
+        self.stem = nn.Sequential(nn.Conv2d(2, channels, 3, padding=1), nn.ReLU())
+        self.blocks = nn.Sequential(*[_Res(channels) for _ in range(n_res)])
+        self.head = nn.Sequential(nn.Flatten(), nn.Linear(channels * ROWS * COLS, features_dim), nn.ReLU())
+
+    def forward(self, x):
+        return self.head(self.blocks(self.stem(x)))
+
+
+# --------------------------------------------------------------------------- lưu / nạp model an toàn
+def _custom_objects(lr=3e-4, clip=0.2):
+    # learning_rate / lr_schedule / clip_range bị SB3 pickle thành hàm (cloudpickle) vào file zip; nạp lại bằng
+    # Python khác phiên bản có thể segfault. Ghi đè bằng hằng số khi nạp => không bao giờ giải mã các hàm đó.
+    return {"learning_rate": lr, "lr_schedule": (lambda _: lr), "clip_range": (lambda _: clip)}
+
+
+def load_model(path, env=None, device="cpu", lr=3e-4, **kwargs):
+    from sb3_contrib import MaskablePPO
+    return MaskablePPO.load(path, env=env, device=device, custom_objects=_custom_objects(lr), **kwargs)
+
+
+def check_board(model):
+    """Báo lỗi sớm nếu model được train cho kích thước bàn khác bàn hiện tại."""
+    shape, n = tuple(model.observation_space.shape), int(model.action_space.n)
+    if shape != (2, ROWS, COLS) or n != COLS:
+        raise ValueError(f"model được train cho bàn {shape[1]}x{shape[2]}, nhưng bàn hiện tại là {ROWS}x{COLS}")
+    return model
+
+
+def save_model(model, path):
+    """Lưu KHÔNG kèm lr_schedule / clip_range (hàm) -> file zip không chứa lambda."""
+    model.save(path, exclude=["lr_schedule", "clip_range"])
+
+
 # --------------------------------------------------------------------------- người chơi dùng mạng nơ-ron
 class TorchPlayer:
-    """Bản sao 'đóng băng' của policy MaskablePPO (dùng làm đối thủ hoặc để đánh giá / chơi thật).
+    """Bản sao 'đóng băng' của policy MaskablePPO (đối thủ self-play, đánh giá, hoặc chơi thật).
 
-    deterministic=True : luôn chọn nước có xác suất cao nhất (dùng khi đánh giá/chơi).
-    flip_avg=True      : trung bình dự đoán của bàn cờ và bản lật gương (Connect4 đối xứng trái-phải).
-    shield=True        : lá chắn chiến thuật 1-ply (thắng ngay > chặn ngay > không tặng thắng).
+    Luôn chạy trên CPU (bản sao nhỏ, suy luận 1 ván cờ trên CPU nhanh hơn GPU) nên dùng được cho cả
+    model train bằng CUDA/MPS.
+
+    deterministic=True : luôn chọn nước xác suất cao nhất (đánh giá/chơi).
+    flip_avg=True      : trung bình dự đoán của bàn cờ và bản lật gương trái-phải.
+    shield=True        : mask 1-ply (thắng ngay > chặn ngay > không tặng thắng).
+    search_depth=D>0   : chế độ LAI - loại các nước mà minimax độ sâu D cho là kém hơn nước tốt nhất quá
+                         `search_margin` điểm (tức tránh mọi thế thua cưỡng bức trong D nước), rồi để policy
+                         chọn trong các nước còn lại.
     """
 
-    def __init__(self, policy, deterministic=False, temperature=1.0, eps=0.0,
-                 flip_avg=False, shield=True, seed=None, name="net"):
-        self.fe = copy.deepcopy(policy.features_extractor).eval()
-        self.mlp = copy.deepcopy(policy.mlp_extractor).eval()
-        self.head = copy.deepcopy(policy.action_net).eval()
+    def __init__(self, policy, deterministic=False, temperature=1.0, eps=0.0, flip_avg=False, shield=True,
+                 search_depth=0, search_margin=16, seed=None, name="net"):
+        self.fe = copy.deepcopy(policy.features_extractor).cpu().eval()
+        self.mlp = copy.deepcopy(policy.mlp_extractor).cpu().eval()
+        self.head = copy.deepcopy(policy.action_net).cpu().eval()
         for m in (self.fe, self.mlp, self.head):
             for p in m.parameters():
                 p.requires_grad_(False)
         self.deterministic, self.temperature, self.eps = deterministic, temperature, eps
         self.flip_avg, self.shield = flip_avg, shield
+        self.search_depth, self.search_margin = search_depth, search_margin
         self.rng = np.random.default_rng(seed)
         self.name = name
 
     def with_options(self, **kw):
-        """Tạo bản dùng chung trọng số nhưng khác tuỳ chọn (không copy lại mạng)."""
+        """Bản dùng chung trọng số nhưng khác tuỳ chọn. Luôn có generator RIÊNG: theo `seed` nếu có,
+        nếu không thì lấy hạt giống từ generator gốc (không chia sẻ cùng một dòng số ngẫu nhiên)."""
         new = copy.copy(self)
+        seed = kw.pop("seed", None)
         for k, v in kw.items():
             setattr(new, k, v)
+        new.rng = np.random.default_rng(seed if seed is not None else int(self.rng.integers(2**31)))
         return new
+
+    # lưu bể đối thủ chỉ gồm tensor + chuỗi => torch.load(weights_only=True) an toàn
+    def state(self):
+        return dict(fe=self.fe.state_dict(), mlp=self.mlp.state_dict(), head=self.head.state_dict(), name=self.name)
+
+    @classmethod
+    def from_state(cls, policy_template, st, **kw):
+        p = cls(policy_template, name=st.get("name", "net"), **kw)
+        p.fe.load_state_dict(st["fe"])
+        p.mlp.load_state_dict(st["mlp"])
+        p.head.load_state_dict(st["head"])
+        return p
 
     @torch.inference_mode()
     def probs(self, me, opp):
@@ -86,8 +162,19 @@ class TorchPlayer:
         mask = me | opp
         if self.eps and self.rng.random() < self.eps:
             cols = legal_cols(mask)
+            if not cols:
+                raise ValueError("Bàn cờ đã đầy, không còn nước đi hợp lệ")
             return int(cols[self.rng.integers(len(cols))])
         p = self.probs(me, opp)
+        if self.search_depth:
+            sc = minimax_scores(me, opp, self.search_depth)
+            top = max(sc.values())
+            ok = [c for c, v in sc.items() if v >= top - self.search_margin]
+            q = np.zeros(COLS)
+            q[ok] = p[ok]
+            if q.sum() <= 0:  # policy không ưa nước nào trong tập an toàn -> chọn đều trong tập đó
+                q[ok] = 1.0
+            p = q / q.sum()
         if self.deterministic:
             return int(p.argmax())
         return int(self.rng.choice(COLS, p=p))
