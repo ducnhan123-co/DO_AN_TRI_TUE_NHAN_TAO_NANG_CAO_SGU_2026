@@ -244,3 +244,4 @@ class SupervisedAgent:
             action = int(np.random.choice(range(self.cols), p=probs))
 
         return (action,)
+

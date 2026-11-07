@@ -1,8 +1,8 @@
 ======================================================================
 BÁO CÁO KẾT QUẢ HUẤN LUYỆN 8 CẤP ĐỘ CONNECT 4 (BÀN 8x9)
 Đồ Án: Trí Tuệ Nhân Tạo Nâng Cao - SGU 2026
-Thời gian hoàn thành: 2 phút 20 giây
-Số bước mỗi cấp độ: 200 steps
+Thời gian hoàn thành: 72 phút 52 giây
+Số bước mỗi cấp độ: 10000 steps
 ======================================================================
 
 1. Cấp 1: Random Agent
@@ -26,22 +26,22 @@ Số bước mỗi cấp độ: 200 steps
    - Tập tin: saved_agents_8x9/level4_mcts.json
 
 5. Cấp 5: Học Có Giám Sát (Supervised Learning)
-   - Trạng thái: ĐÃ HUẤN LUYỆN (200 steps)
+   - Trạng thái: ĐÃ HUẤN LUYỆN (10000 steps)
    - Kiến trúc: Deep Conv2D (3 channels -> 64 -> 128 -> 128 -> FC 256 -> 9)
    - Tập tin: saved_agents_8x9/level5_supervised.pth
 
 6. Cấp 6: Học Tăng Cường (Reinforcement Learning - PPO)
-   - Trạng thái: ĐÃ HUẤN LUYỆN (200 timesteps)
+   - Trạng thái: ĐÃ HUẤN LUYỆN (10000 timesteps)
    - Môi trường: Connect4 Gym Environment (8x9)
    - Tập tin: saved_agents_8x9/level6_rl_ppo.zip
 
 7. Cấp 7: AlphaZero Foundation
-   - Trạng thái: ĐÃ HUẤN LUYỆN (200 timesteps)
+   - Trạng thái: ĐÃ HUẤN LUYỆN (10000 timesteps)
    - Kiến trúc: Conv2D Feature Extractor + Policy-Value Head + PUCT MCTS
    - Tập tin: saved_agents_8x9/level7_alphazero.zip
 
 8. Cấp 8: AlphaZero Master (Self-Play League)
-   - Trạng thái: ĐÃ HUẤN LUYỆN (200 timesteps)
+   - Trạng thái: ĐÃ HUẤN LUYỆN (10000 timesteps)
    - Cơ chế: Historical League Opponent Pool + Tactical Lookahead + Online Learning
    - Tập tin: saved_agents_8x9/level8_alphazero_master.zip
 

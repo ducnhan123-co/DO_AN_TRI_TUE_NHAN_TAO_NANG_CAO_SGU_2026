@@ -21,3 +21,4 @@ class RandomAgent:
         if not valid_cols:
             return (0,)
         return (int(np.random.choice(valid_cols)),)
+

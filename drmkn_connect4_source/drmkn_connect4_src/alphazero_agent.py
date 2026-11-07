@@ -245,3 +245,4 @@ class AlphaZeroAgent:
             if action in valid_cols:
                 return (action,)
             return self.fallback.predict(board)
+

@@ -85,3 +85,4 @@ class RLAgent:
                 pass
 
         return self.fallback.predict(board, deterministic=deterministic)
+
