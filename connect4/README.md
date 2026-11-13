@@ -1,109 +1,392 @@
-# Connect Four - Game AI cấp 1-4
+# Connect 4 AI - Strategy Arena
 
+Trò chơi **Connect 4 (Bốn quân thẳng hàng)** trên bàn **8 hàng × 9 cột** (hỗ trợ cả bàn cổ điển 6×7), kèm AI được huấn luyện bằng **học tăng cường (MaskablePPO + self-play)** và giao diện đồ hoạ `pygame`.
 
-## Cấu trúc
+<p align="center">
+  <img src="docs/screenshot_human_vs_ai.png" width="330" alt="Người vs AI">
+  &nbsp;&nbsp;
+  <img src="docs/screenshot_ai_vs_ai.png" width="330" alt="AI vs AI">
+</p>
+
+> ## ⚠️ Bản đã chỉnh (giao diện có menu + ghi kết quả + thí nghiệm theo đề cuối kỳ)
+>
+> * `python play.py` mở **giao diện có MENU chọn chế độ ngay trong cửa sổ** (Người / cấp 1-8 cho từng bên, bàn cờ, ai đi trước,
+>   số ván, khai cuộc, thời gian/nước) và **ghi kết quả mọi ván** vào `results/play_log/games.jsonl` (màn "Kết quả" có thống kê + xuất CSV). Code: `arena.py`, `gui.py` (`ArenaApp`).
+> * **Thí nghiệm theo đề:** `tournament.py` (round-robin, >=100 ván/cặp, khai cuộc ghép cặp đổi bên, Wilson/bootstrap, p95, nút/mô phỏng, 2 chế độ ngân sách)
+>   và `run_ablation.py` (ablation).
+> * **Không kèm model huấn luyện sẵn** (đã bỏ `models/*.zip` và `levels/8x9/*`). Cấp 5-8 bị khóa tới khi bạn train: xem **[HUONG_DAN_TRAIN.md](HUONG_DAN_TRAIN.md)**.
+> * Thay đổi nhỏ ở lõi: `c4core.py` (đếm nút, minimax đào sâu theo thời gian), `mcts.py`/`levels.py` (giới hạn thời gian, tham số ablation),
+>   `train_levels.py` (tách train/val/test theo ván, `meta_*.json`).
+> * Các số liệu ở mục 9 và `results/*.csv` là của **các model cũ do nhóm train trước đây** (không còn kèm trong bản này).
+> * Kiểm thử mới: `python -m unittest test_arena -v` (không cần torch/pygame thật).
+
+## Mục lục
+
+1. [Tính năng](#1-tính-năng)
+2. [Cấu trúc dự án](#2-cấu-trúc-dự-án)
+3. [Yêu cầu hệ thống](#3-yêu-cầu-hệ-thống)
+4. [Cài đặt](#4-cài-đặt)
+5. [Chạy nhanh](#5-chạy-nhanh) · [**Thang 8 cấp độ**](#thang-8-cấp-độ)
+6. [Hướng dẫn chơi](#6-hướng-dẫn-chơi)
+7. [Huấn luyện AI](#7-huấn-luyện-ai)
+8. [Đánh giá model](#8-đánh-giá-model)
+9. [Kết quả](#9-kết-quả)
+10. [Cách hoạt động](#10-cách-hoạt-động)
+11. [Xử lý sự cố](#11-xử-lý-sự-cố)
+12. [Hạn chế và hướng phát triển](#12-hạn-chế-và-hướng-phát-triển)
+
+---
+
+## 1. Tính năng
+
+- **Bàn cờ tuỳ chọn:** mặc định 8×9, đổi sang 6×7 bằng một tham số hoặc một nút bấm trong game.
+- **5 chế độ chơi:** Người vs Random, Tactical, Minimax, AI đã train, và **AI vs AI** (xem đấu).
+- **Giao diện Arena:** nền tối, bảng điểm BẠN / HÒA / AI, chọn ai đi trước, cột sáng + quân ma khi rê chuột, quân rơi có hiệu ứng, viền sáng 4 quân thắng.
+- **AI mạnh hơn bản cũ rõ rệt:** thắng toàn bộ 16 agent PPO của phiên bản đầu (xem [Kết quả](#9-kết-quả)).
+- **Lõi luật bitboard** nhanh và đã kiểm thử với brute-force; minimax alpha-beta độ sâu 8 chỉ ~0.1 giây.
+- **Huấn luyện tái lập được:** self-play có bể đối thủ, đánh giá định kỳ, lưu CSV và TensorBoard, hỗ trợ `--resume`.
+
+## 2. Cấu trúc dự án
 
 ```
-c4ai/
-  game.py            Engine bitboard + API: reset, legal_actions, step, is_terminal, result,
-                     reward, render, clone, undo (+ key, from_moves, from_grid)
-  evaluation_fn.py   Hàm lượng giá tĩnh (69 cửa sổ 4 ô + kiểm soát cột giữa)
-  agents/
-    random_agent.py  Cấp 1  Random
-    heuristic.py     Cấp 2  Rule-based (thắng > chặn > tránh tự sát > vị trí; bật/tắt từng luật)
-    alphabeta.py     Cấp 3  Negamax + Alpha-Beta (tắt được cắt tỉa / hàm lượng giá; iterative deepening)
-    mcts.py          Cấp 4  MCTS-UCT (số mô phỏng hoặc thời gian; rollout random / light)
-  tournament.py      Round-robin, khai cuộc ghép cặp, đổi bên, seed, log JSONL, Wilson/bootstrap
-  stats.py           Wilson CI, bootstrap, phân vị
-  webapp.py          Server web (thư viện chuẩn) + ui/index.html: giao diện chơi
-tests/               44 unit test (engine, agent, giải đấu, web)
-run_ui.py            Chạy giao diện web (http://127.0.0.1:8765)
-run_tournament.py    Giải đấu 2 chế độ ngân sách
-run_ablation.py      Ablation A1-A6
-play.py              Demo chơi trong terminal (người-máy / máy-máy, chọn cấp AI)
-results/             Kết quả đã chạy (log thô, summary.md/json, ablation)
+connect4_v2/
+├── play.py              # Điểm vào: menu 1-5 hoặc --mode ...
+├── gui.py               # Giao diện pygame (do play.py gọi)
+├── levels.py            # Thang 8 cấp độ (registry + tạo người chơi theo cấp)
+├── mcts.py              # Cấp 4 (Monte Carlo), cấp 5 (giám sát), cấp 7-8 (AlphaZero)
+├── train_levels.py      # Train cấp 5-8 (mặc định 10.000 bước mỗi cấp)
+├── evaluate_levels.py   # Đo sức mạnh thang 8 cấp
+├── c4core.py            # Luật bàn cờ (bitboard), minimax, các người chơi mẫu
+├── c4env.py             # Môi trường Gymnasium + bể đối thủ self-play
+├── train_v2.py          # Huấn luyện MaskablePPO
+├── evaluate_v2.py       # Đánh giá model với các đối thủ cố định
+├── test_core.py         # Kiểm thử lõi luật (bitboard, minimax)
+├── test_regression.py   # Kiểm thử hồi quy các lỗi đã sửa (model, seed, biên cột...)
+├── CHANGELOG.md         # Danh sách thay đổi / lỗi đã sửa
+├── .gitignore
+├── requirements.txt
+├── arena.py             # (mới) Lõi phiên chơi + ghi kết quả (games.jsonl) + thống kê
+├── tournament.py        # (mới) Round-robin theo đề cuối kỳ
+├── run_ablation.py      # (mới) Ablation
+├── expstats.py          # (mới) Wilson, bootstrap, phân vị
+├── boardenv.py          # (mới) đặt cỡ bàn từ --board/--rows/--cols trước khi import c4core
+├── test_arena.py, fake_pygame.py   # (mới) kiểm thử không cần torch/pygame
+├── HUONG_DAN_TRAIN.md   # (mới) hướng dẫn tự train + thí nghiệm
+├── levels/<RxC>/        # model cấp 5, 6, 7-8 do BẠN train (rỗng khi mới tải về)
+├── models/              # (tuỳ chọn) model PPO tự train cho --mode agent
+├── results/             # Kết quả thí nghiệm (CSV + experiments.md)
+└── docs/                # Ảnh chụp giao diện
 ```
 
-## Chạy
+## 3. Yêu cầu hệ thống
+
+| Thành phần | Yêu cầu |
+|---|---|
+| Python | **3.10 trở lên** (dùng `int.bit_count()`) |
+| Hệ điều hành | Windows / Linux / macOS |
+| Phần cứng | CPU là đủ; không cần GPU |
+| Màn hình | Cao tối thiểu ~700 px ở bàn 8×9 (hoặc dùng `--cell` để thu nhỏ) |
+
+## 4. Cài đặt
+
+**Windows (PowerShell):**
+
+```powershell
+cd connect4_v2
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+**Linux / macOS:**
 
 ```bash
-python -m unittest discover -s tests -t .          # kiểm thử tự động (~4 s)
-python run_ui.py                                   # GIAO DIỆN WEB: chọn cấp AI cho từng bên
-python play.py --ai 4                              # (terminal) chơi với MCTS, bạn là X đi trước
-python play.py --ai 3 --depth 6 --second           # chơi với Alpha-Beta độ sâu 6, bạn đi sau
-python play.py --ai 2 --ai2 4                      # máy-máy: Heuristic vs MCTS
-python run_tournament.py --mode all                # 2 chế độ ngân sách, 200 ván/cặp
-python run_ablation.py                             # A1-A6 (vài phút)
-python run_ablation.py --only A1 A4
+cd connect4_v2
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Mọi kết quả sinh lại được: seed cố định (`--seeds 0 1`), cấu hình ghi trong `config.json`.
+Kiểm tra cài đặt (mọi dòng phải báo OK / PASS):
 
-## Giao diện web
+```bash
+python test_core.py          # luật bàn cờ + minimax (vài giây)
+python test_regression.py    # model lưu/nạp, seed, biên cột... (16 kiểm thử)
+```
 
-`python run_ui.py` mở trang chơi tại http://127.0.0.1:8765 (thêm `--port`, `--no-browser` nếu cần; mặc định chỉ nhận kết nối
-từ máy bạn). Không cần cài thêm thư viện.
+## 5. Chạy nhanh
 
-* Chọn loại người chơi cho **mỗi bên** (Người / Random / Heuristic / Alpha-Beta / MCTS) -> người-máy, máy-máy, người-người;
-  có sẵn 3 cấu hình nhanh. Alpha-Beta chỉnh được độ sâu, MCTS chỉnh được số mô phỏng.
-* Nhấn cột hoặc phím 1-7 để thả quân (hiển thị cột 1-7; trong code và log là 0-6). Hoàn tác, ván mới, tạm dừng, tốc độ máy-máy.
-* Hiển thị phân tích nước đi của máy: thời gian, số nút/mô phỏng, độ sâu, phân bố lượt thăm MCTS, và Alpha-Beta báo khi thấy
-  chuỗi thắng/thua cưỡng bức.
-* Giao diện chỉ là lớp hiển thị: nước đi của máy do chính các agent Python trong `c4ai/agents/` tính (server dựng lại ván từ
-  danh sách nước đi, không giữ trạng thái).
+```bash
+python play.py
+```
 
-## Mô hình hóa bài toán (Mục 3.1 của đề)
+Menu hiện ra:
 
-| Mục | Nội dung |
+```
+==========================================
+     CONNECT 4 (8x9) - AI MENU
+==========================================
+1. Human vs Random
+2. Human vs Tactical (thắng/chặn nước 1)
+3. Human vs Minimax
+4. Human vs trained agent
+5. Agent vs Agent (xem đấu)
+6. Human vs Level 1-8 (thang độ khó)
+0. Exit
+```
+
+Vào thẳng một chế độ (bỏ qua menu):
+
+| Mục đích | Lệnh |
 |---|---|
-| Luật | Bàn 7 cột x 6 hàng; hai người thay phiên thả quân vào cột, quân rơi xuống ô trống thấp nhất; 4 quân liên tiếp (ngang/dọc/chéo) thắng; bàn đầy mà không ai thắng là hòa. Nước thứ 42 tạo 4 liên tiếp được tính là THẮNG. |
-| Người chơi | 1 (X, đi trước) và 2 (O, đi sau) |
-| Quan sát | đầy đủ (thông tin hoàn hảo) |
-| Tính chất | xác định, tổng bằng không, luân phiên |
-| Trạng thái | bàn cờ + người đến lượt; ~4,5 x 10^12 thế cờ hợp lệ (Tromp), cây trò chơi ~10^21 |
-| Hành động | cột 0..6, hợp lệ khi cột chưa đầy; nước bất hợp lệ ném `ValueError` |
-| Reward (góc nhìn người chơi p) | +1 thắng / 0 hòa / -1 thua, chỉ phát ở cuối ván (`game.reward(p)`) |
-| Input/Output của agent | input: `Connect4` (trạng thái + lượt); output: một cột hợp lệ |
+| Đấu AI đã train (bàn 8×9) | `python play.py --mode agent` |
+| Đấu Minimax độ sâu 4 | `python play.py --mode minimax --depth 4` |
+| Đấu bot Tactical | `python play.py --mode tactical` |
+| Đấu Random | `python play.py --mode random` |
+| **AI + tìm kiếm (mạnh hơn nhiều)** | `python play.py --mode agent --search 4` |
+| **Thang 8 cấp độ** (phím 1-8 đổi cấp trong game) | `python play.py --level 5` |
+| Xem hai AI đấu nhau | `python play.py --mode aivai` |
+| Bàn 6×7 cổ điển | `python play.py --rows 6 --cols 7` |
+| Dùng model riêng | `python play.py --mode agent --model runs/main/best.zip` |
+| Thu nhỏ cửa sổ | `python play.py --cell 44` |
 
-Kiểm thử engine (`tests/test_game.py`): thắng ngang/dọc/hai đường chéo, không "vòng" qua biên cột,
-hòa, thắng ở nước 42, nước bất hợp lệ, `undo` khôi phục chính xác, `clone` độc lập, so khớp với bộ kiểm tra
-ngây thơ trên 3000 ván ngẫu nhiên, và đếm số thế cờ khác nhau sau n nước khớp dãy đã biết
-(1, 7, 49, 238, 1120, 4263).
+### Tham số của `play.py`
 
-## Các tác tử (Mục 3.2)
+| Tham số | Mặc định | Ý nghĩa |
+|---|---|---|
+| `--mode` | (hiện menu) | `random`, `tactical`, `minimax`, `agent`, `aivai`, `level` |
+| `--level` | - | Cấp độ 1-8 (tự vào mode `level`) |
+| `--depth` | 4 | Độ sâu minimax (1-8) |
+| `--search` | 0 | Chế độ lai: minimax độ sâu N loại các nước dẫn tới thế thua (khuyến nghị 4; menu mặc định hỏi 4) |
+| `--model` | `models/agent_<R>x<C>.zip` (tuyệt đối) | Đường dẫn model AI |
+| `--model-b` | = `--model` | Model của AI B (mode `aivai`) |
+| `--rows`, `--cols` | 8, 9 | Kích thước bàn |
+| `--cell` | 0 (tự động) | Cỡ ô tính bằng pixel |
 
-**Cấp 1 - Random.** Chọn đều trong các cột hợp lệ.
+## Thang 8 cấp độ
 
-**Cấp 2 - Heuristic.** Thứ tự ưu tiên: (1) thắng ngay, (2) chặn đối thủ thắng ngay, (3) tránh nước làm mở ô thắng
-cho đối thủ ngay phía trên, (4) chọn nước cho thế cờ có điểm tĩnh cao nhất. Xung đột luật: thắng ưu tiên hơn chặn;
-nếu đối thủ có đe dọa kép thì chặn một ô (không cứu được); nếu mọi nước đều tự sát thì bỏ luật 3.
-Không có trạng thái toàn cục (khác code cũ dùng nhiễu UCB làm kết quả phụ thuộc lịch sử).
+Chơi: `python play.py --level 5` (hoặc menu mục 6). **Trong game bấm phím `1`–`8` để đổi cấp** (bảng điểm được đặt lại).
 
-**Cấp 3 - Alpha-Beta.** Negamax giới hạn độ sâu, hàm lượng giá cửa sổ 4 ô, điểm thắng giảm theo độ sâu
-(`WIN - ply`, ưu tiên thắng nhanh), duyệt cột từ giữa ra biên, chọn nước đầu tiên khi đồng điểm (xác định).
-Tùy chọn: `prune=False` (minimax thuần), `use_eval=False` (nút lá = 0), `time_limit` (iterative deepening).
-Đếm số nút mỗi nước.
+<p align="center"><img src="docs/screenshot_levels.png" width="330" alt="Chọn cấp độ"></p>
 
-**Cấp 4 - MCTS-UCT.** Selection (UCB1, c = √2) - Expansion - Simulation (random rollout, hoặc `light`: thắng/chặn ngay) -
-Backpropagation (W theo góc nhìn người vừa đi). Chọn nước có nhiều lượt thăm nhất. Ngân sách: số mô phỏng
-hoặc thời gian.
+| Cấp | Phương pháp | Cần train | Mô tả |
+|---|---|---|---|
+| 1 | Random | không | Đi ngẫu nhiên |
+| 2 | Heuristic | không | Chấm điểm bàn cờ sau 1 nước; thắng/chặn ngay; không tặng thắng |
+| 3 | Minimax | không | Negamax + alpha-beta, độ sâu 3 |
+| 4 | Monte Carlo | không | MCTS thuần (UCT + ván giả lập ngẫu nhiên), 4000 mô phỏng |
+| 5 | Học có giám sát | có | Mạng MLP bắt chước nước đi của minimax độ sâu 4 |
+| 6 | Học tăng cường | có | MaskablePPO, khởi tạo từ mạng cấp 5 rồi tự chơi |
+| 7 | AlphaZero | có | Mạng policy+value + MCTS PUCT, **100** mô phỏng/nước |
+| 8 | AlphaZero | có | Cùng mạng với cấp 7, **800** mô phỏng/nước |
 
-## Thiết kế thí nghiệm (Mục 3.5)
+### Train các cấp (10.000 bước mỗi cấp)
 
-* **Round-robin 4 agent, 200 ván/cặp** = 2 seed x 100 ván. Mỗi khai cuộc (4 nước ngẫu nhiên hợp lệ, chưa kết thúc) được chơi
-  **hai lần** đổi bên đi trước -> cân bằng lượt đi. Tập khai cuộc dùng chung cho mọi cặp (ghép cặp).
-  Cần khai cuộc ngẫu nhiên vì Alpha-Beta/Heuristic gần như xác định; nếu không, mọi ván giống hệt nhau.
-* **Hai chế độ ngân sách**: `default` (Alpha-Beta d=5, MCTS 1000 mô phỏng) và `time` (50 ms/nước cho cả Alpha-Beta
-  iterative deepening và MCTS). Không coi "cùng độ sâu" là công bằng tính toán.
-* Chạy tuần tự 1 tiến trình để số đo thời gian không nhiễu. Số liệu: thắng/hòa/thua, score = (thắng + 0,5 x hòa)/ván,
-  Wilson 95% và bootstrap 95%, score theo bên đi trước/sau và theo seed, thời gian TB/p95/max mỗi nước, số nút/mô phỏng TB.
-* Log thô từng ván: `results/*/games.jsonl`.
-* Ablation (A1-A6) trong `run_ablation.py`, kết quả ở `results/ablation/`.
+```bash
+python train_levels.py                        # cấp 5, 6, 7(+8): 10.000 bước mỗi cấp
+python train_levels.py --levels 5             # chỉ một cấp
+python train_levels.py --steps 50000          # ngân sách lớn hơn (mạnh hơn, lâu hơn)
+python train_levels.py --max-seconds 240      # chia nhỏ: chạy lại đúng lệnh để TIẾP TỤC
+```
 
-## Hạn chế
+"Bước" mỗi cấp được tính khác nhau (nói rõ để so sánh công bằng):
 
-* Giải đấu dùng khai cuộc ngẫu nhiên 4 nước: một số khai cuộc đã thắng cưỡng bức cho một bên (Random đôi khi thắng nhờ đó);
-  việc đổi bên bù trừ nhưng điểm số giữa agent mạnh và Random vì thế không đúng 1,0 tuyệt đối.
-* Alpha-Beta không có bảng chuyển vị/bộ giải hoàn chỉnh, MCTS chưa dùng giá trị học được: sức mạnh thực nghiệm
-  không phải tính tối ưu đã chứng minh (Connect Four đã được giải: bên đi trước thắng nếu đi giữa).
-* Số đo thời gian phụ thuộc phần cứng (xem `config.json`).
+| Cấp | 1 bước là | Dữ liệu / tự chơi |
+|---|---|---|
+| 5 | 1 lần cập nhật gradient (batch 128) | 60.000 thế cờ do minimax d4 gán nhãn, tăng cường bằng lật gương |
+| 6 | 1 bước môi trường PPO (10 lần cập nhật chính sách) | Tự chơi với bể đối thủ; bắt đầu từ mạng cấp 5 (`--rl-scratch` để khởi tạo ngẫu nhiên) |
+| 7-8 | 1 lần cập nhật gradient | ~2.000 ván tự chơi, 64 mô phỏng/nước, buffer 60.000 mẫu |
+
+Máy 1 CPU: cấp 5 ~10 phút (chủ yếu sinh dữ liệu), cấp 6 ~15 giây, cấp 7-8 ~7 phút. Đo sức mạnh: `python evaluate_levels.py --games 20`.
+
+### Sức mạnh đo được (bàn 8×9, 20 ván mỗi ô, điểm = thắng + 0,5·hoà)
+
+| Cấp | vs Random | vs Minimax d2 | vs Minimax d4 | vs cấp dưới |
+|---|---|---|---|---|
+| 1 Random | 0,40 | 0,00 | 0,00 | - |
+| 2 Heuristic | 1,00 | 0,25 | 0,10 | 1,00 |
+| 3 Minimax | 1,00 | 0,50 | 0,45 | 0,85 |
+| 4 Monte Carlo | 1,00 | 0,75 | 0,70 | 0,60 |
+| 5 Học có giám sát | 1,00 | 0,50 | 0,17 | 0,10 |
+| 6 Học tăng cường | 1,00 | 0,25 | 0,15 | 0,45 |
+| 7 AlphaZero (100) | 1,00 | 0,55 | 0,25 | 0,75 |
+| 8 AlphaZero (800) | 1,00 | 0,65 | 0,25 | 0,90 |
+
+**Lưu ý quan trọng về thứ tự độ khó:**
+- Độ khó tăng đúng thứ tự từ cấp 1 đến 4 và từ cấp 6 đến 8. **Cấp 5-8 chưa mạnh hơn cấp 4** khi chỉ train 10.000 bước: phương pháp học cần nhiều dữ liệu/bước hơn nhiều so với tìm kiếm thuần. Cấp 5 đứng dưới cấp 4 (đối đầu 0,10).
+- Cấp 8 hơn cấp 7 rõ rệt (0,90 khi đối đầu) chỉ nhờ tìm kiếm sâu hơn; cùng một mạng.
+- Cấp 5, 6, 7, 8 dùng "mask 1 nước" (thắng ngay / chặn ngay / không tặng thắng) như agent PPO ở mục 10. Tắt mask thì các cấp này yếu đi nhiều.
+- 20 ván mỗi ô nên sai số lớn (cấp 1 vs Random ra 0,40 thay vì 0,50 là do nhiễu).
+- Muốn các cấp học mạnh hơn: tăng `--steps` (ví dụ 50.000+), `--sl-positions`, `--az-train-sims`.
+
+## 6. Hướng dẫn chơi
+
+- **Mục tiêu:** xếp 4 quân liên tiếp theo hàng ngang, dọc hoặc chéo trước đối thủ.
+- **Quân cam** là bên A (bạn), **quân đỏ** là bên B (AI). Ai đi trước do nút bấm quyết định.
+- **Thả quân:** click vào cột muốn thả. Click vào cột đã đầy sẽ bị bỏ qua.
+
+| Thao tác | Tác dụng |
+|---|---|
+| Rê chuột vào cột | Cột sáng lên, hiện quân ma ở trên |
+| Click cột | Thả quân |
+| Nút **Bạn đi trước** / **AI đi trước** | Chọn bên đi trước và bắt đầu ván mới |
+| Nút **Bàn Cờ 8x9 (đổi sang 6x7)** | Mở lại game với bàn kia và model tương ứng |
+| Click vào bàn sau khi hết ván | Ván mới |
+| `R` / `Space` / `Enter` | Ván mới |
+| `1`–`8` (mode `level`) | Đổi cấp độ đối thủ |
+| `Esc` | Thoát |
+
+Bảng điểm ở góc phải trên cùng cộng dồn trong suốt phiên chơi.
+
+## 7. Huấn luyện AI
+
+Chạy thử nhanh (vài phút trên CPU):
+
+```bash
+python train_v2.py --arch mlp --steps 400000 --out runs/quick
+```
+
+Huấn luyện đầy đủ (nên dùng máy mạnh):
+
+```bash
+python train_v2.py --arch cnn --channels 64 --steps 3000000 --out runs/main
+```
+
+Huấn luyện tiếp từ chỗ dừng (bể đối thủ được khôi phục từ `pool.pt`):
+
+```bash
+python train_v2.py --steps 1000000 --out runs/main --resume runs/main/last.zip
+```
+
+Khởi tạo model 8×9 từ model 6×7 (chuyển giao, chỉ hỗ trợ `--arch mlp`):
+
+```bash
+python train_v2.py --arch mlp --steps 2000000 --out runs/t89 --init-from models/agent_6x7.zip --init-board 6x7
+```
+
+Theo dõi quá trình học:
+
+```bash
+tensorboard --logdir runs
+```
+
+### Tham số của `train_v2.py`
+
+| Tham số | Mặc định | Ý nghĩa |
+|---|---|---|
+| `--steps` | 1,000,000 | Số bước train (khi `--resume`: số bước train thêm) |
+| `--out` | `runs/main` | Thư mục lưu kết quả |
+| `--arch` | `cnn` | `mlp` (nhanh) hoặc `cnn` (mạnh hơn, chậm hơn nhiều trên CPU) |
+| `--channels`, `--n-res` | 64, 2 | Cỡ CNN |
+| `--n-envs` | 16 | Số môi trường song song |
+| `--n-steps` | 128 | Số bước mỗi môi trường mỗi lần cập nhật |
+| `--batch-size`, `--n-epochs` | 512, 4 | Cấu hình cập nhật PPO |
+| `--lr` | 3e-4 | Learning rate (giảm tuyến tính về 10%) |
+| `--ent-coef` | 0.01 | Hệ số entropy (giữ khám phá) |
+| `--warmup`, `--snap-every` | 25,000 | Bắt đầu / tần suất chụp snapshot vào bể đối thủ |
+| `--eval-every` | 50,000 | Tần suất đánh giá |
+| `--device` | `auto` | `auto`, `cpu`, `cuda`, `mps` (AI khi chơi luôn chạy trên CPU nên model train bằng GPU vẫn dùng được) |
+| `--threads` | 0 (tự động) | Số luồng torch |
+| `--seed` | 0 | Seed ngẫu nhiên |
+
+### Tệp tạo ra trong `--out`
+
+| Tệp | Nội dung |
+|---|---|
+| `best.zip` | Checkpoint điểm `hard_score` cao nhất (điểm được lưu ở `best_score.json` và khôi phục khi `--resume`, nên không bị ghi đè bằng model tệ hơn) |
+| `best_score.json` | `hard_score` tốt nhất đã đạt |
+| `last.zip` | Checkpoint mới nhất |
+| `final.zip` | Model khi kết thúc |
+| `eval_log.csv` | Điểm đánh giá theo thời gian |
+| `pool.pt` | Bể đối thủ self-play (chỉ tensor, nạp bằng `weights_only=True`) |
+| `snapshots/` | Checkpoint định kỳ |
+| `tb/` | Log TensorBoard |
+
+> Lưu ý: model chỉ chơi được ở đúng kích thước bàn đã train. Đổi kích thước bàn khi train bằng `--rows/--cols` **hoặc** biến môi trường (PowerShell: `$env:C4_ROWS=6; $env:C4_COLS=7`).
+
+## 8. Đánh giá model
+
+```bash
+python evaluate_v2.py models/agent_8x9.zip --games 100 --save results/my_eval.csv
+python evaluate_v2.py models/agent_8x9.zip --games 60 --search 4   # chế độ lai
+```
+
+Model đấu với Random, Tactical, Minimax độ sâu 2, 4, 6 (đổi bên luân phiên, mở đầu 2 nước ngẫu nhiên). Cột `--save` ghi CSV (nối thêm nếu file đã có).
+
+## 9. Kết quả
+
+Thắng / hoà / thua từ góc nhìn của AI. Số ván nhỏ (20-100) nên sai số còn lớn.
+
+**[Model cũ của nhóm, không kèm trong bản này] Bàn 8×9 (`agent_8x9.zip`, ~1,75M bước, MLP):**
+
+| Đối thủ | Ván | Thắng | Hoà | Thua |
+|---|---|---|---|---|
+| Random | 60 | 60 | 0 | 0 |
+| Tactical | 60 | 47 | 0 | 13 |
+| Minimax d2 | 60 | 25 | 0 | 35 |
+| Minimax d4 | 60 | 12 | 0 | 48 |
+| Minimax d6 | 20 | 1 | 0 | 19 |
+
+**Bàn 6×7 (`agent_6x7.zip`):**
+
+| Đối thủ | Ván | Thắng | Hoà | Thua |
+|---|---|---|---|---|
+| Random | 100 | 100 | 0 | 0 |
+| Tactical | 100 | 82 | 6 | 12 |
+| Agent15 của phiên bản cũ | 100 | 100 | 0 | 0 |
+| Ensemble 15 agent cũ | 100 | 98 | 0 | 2 |
+| Minimax d2 | 100 | 15 | 24 | 61 |
+| Minimax d4 | 60 | 14 | 4 | 42 |
+
+**Chế độ lai (policy + minimax loại nước tệ, cùng `agent_8x9.zip`, bàn 8×9):**
+
+| Đối thủ | Chỉ policy | `--search 2` | `--search 4` | `--search 6` |
+|---|---|---|---|---|
+| Tactical | 0.78 | 0.83 | 0.93 | 0.97 |
+| Minimax d2 | 0.42 | 0.57 | 0.71 | 0.85 |
+| Minimax d4 | 0.20 | 0.27 | 0.57 | 0.55 |
+| Minimax d6 | 0.05 | 0.10 | 0.25 | (chưa đo) |
+
+(Điểm = thắng + 0.5·hoà. 40-60 ván mỗi ô; `--search 6` tốn ~0.08 giây/nước.)
+
+So với 16 agent cũ (không tiến bộ qua các thế hệ, thắng Tactical 5.6% và Minimax 0%), bản này cải thiện rõ rệt về chiến thuật nhưng **vẫn thua minimax sâu**. Chi tiết xem thư mục `results/`.
+
+## 10. Cách hoạt động
+
+**Quan sát tương đối.** Mạng nhận tensor 2 kênh (quân của mình / quân đối thủ), không phụ thuộc mình là bên đi trước hay sau.
+
+**Action mask 1 nước.** Mỗi lượt chỉ cho phép: nước thắng ngay (nếu có), không thì các nước chặn bắt buộc, không thì các nước không tặng đối thủ thắng. Việc này đưa kiến thức chiến thuật 1 nước vào mask để PPO dồn sức học chiến lược sâu hơn. **Model phải chơi cùng mask này** (đã bật sẵn trong `TorchPlayer`); bỏ mask thì agent thua gần hết.
+
+**Reward sạch.** +1 thắng, 0 hoà, -1 thua; không còn phạt nước phạm quy nhờ mask.
+
+**Bể đối thủ self-play.** Mỗi ván lấy đối thủ ngẫu nhiên: 60% là snapshot quá khứ của chính nó, 20% minimax nông (d1-3), 15% bot Tactical, 5% Random, kèm nhiễu ε ngẫu nhiên. Cách này tránh hiện tượng "kéo-búa-bao" khi chỉ đấu với một đối thủ cố định.
+
+**Lõi luật bitboard.** Mỗi cột dùng `hàng + 1` bit (bit đệm ở trên). Kiểm tra thắng bằng dịch bit, minimax dùng negamax + alpha-beta + sắp xếp nước từ giữa + cắt tỉa nước ép buộc. Đã kiểm chứng khớp brute-force và minimax thuần.
+
+**Chế độ lai (`--search N`).** Với mỗi nước đi, minimax độ sâu N chấm điểm mọi nước hợp lệ; các nước kém nước tốt nhất quá một ngưỡng nhỏ (tức dẫn tới thế thua cưỡng bức trong N nước) bị loại, rồi policy chọn trong số còn lại. Tắt mặc định để số liệu "AI thuần học tăng cường" vẫn so sánh được.
+
+**Lưu/nạp model an toàn.** File model không chứa hàm `lambda` (learning rate dùng số thực, `lr_schedule`/`clip_range` không được lưu) và lớp CNN nằm ở `c4env.py` nên model nạp được từ mọi nơi/phiên bản Python. Luôn nạp qua `c4env.load_model()`.
+
+**Khi chơi,** AI chọn nước có xác suất cao nhất, trung bình hoá dự đoán của bàn cờ và bản lật gương trái-phải.
+
+## 11. Xử lý sự cố
+
+| Lỗi / hiện tượng | Cách xử lý |
+|---|---|
+| `ModuleNotFoundError: sb3_contrib` / `torch` / `pygame` | `pip install -r requirements.txt` trong đúng venv |
+| `Không tìm thấy model: models/agent_RxC.zip` | Đặt model đúng thư mục, hoặc truyền `--model`, hoặc chạy `--mode minimax` |
+| `model được train cho bàn AxB, nhưng bàn hiện tại là RxC` | Chạy đúng `--rows/--cols` mà model đã train |
+| `pycache`/`.serena` bị đưa vào git | Dùng `.gitignore` kèm theo (tên phải có dấu chấm), rồi `git rm -r --cached __pycache__ .serena` |
+| Cửa sổ quá cao, bị cắt | `python play.py --cell 44` |
+| Nút đổi bàn báo "Không tìm thấy" | Thiếu model của bàn kia trong `models/` |
+| Train chậm | Dùng `--arch mlp`, tăng `--threads`; CNN chậm hơn khoảng 4-5 lần trên CPU |
+| Model cũ (train trước bản này) nạp lỗi / segfault ở máy khác | Nạp bằng `c4env.load_model()` (ghi đè các hàm bị pickle), rồi `save_model()` để lưu lại bản sạch |
+| `best.zip` kém hơn mong đợi sau khi đổi cấu hình đánh giá | Xoá `best_score.json` để chọn lại `best` theo cấu hình mới |
+| Đổi kích thước bàn bằng PowerShell | `$env:C4_ROWS=6; $env:C4_COLS=7` (đặt trước khi chạy lệnh) |
+
+## 12. Hạn chế và hướng phát triển
+
+- Chưa kiểm thử trên GPU/MPS thật (AI khi chơi luôn chạy trên CPU nên không phụ thuộc thiết bị).
+- AI mới chỉ train ~1-2 triệu bước trên 1 CPU và đạt ~0.4 điểm so với minimax; đánh giá chỉ vài chục ván nên còn nhiễu.
+- Thử nghiệm chuyển giao 6×7 → 8×9 không vượt model train từ đầu.
+- Hướng tiếp theo: train lâu hơn với `--arch cnn`; gắn tìm kiếm lúc chơi (MCTS hoặc alpha-beta dùng value của mạng); bể đối thủ lớn hơn; đánh giá nhiều ván hơn để chọn checkpoint; hướng kiểu AlphaZero.
