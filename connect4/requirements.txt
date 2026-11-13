@@ -1,2 +1,7 @@
-# Chỉ cần Python 3.10+. matplotlib chỉ dùng cho make_figures.py
-matplotlib>=3.7
+numpy
+torch
+gymnasium
+stable-baselines3>=2.3
+sb3-contrib>=2.3
+tensorboard
+pygame
