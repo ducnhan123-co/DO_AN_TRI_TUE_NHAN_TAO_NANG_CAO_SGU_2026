@@ -1,0 +1,17 @@
+variant,opponent,games,win,draw,loss,score,ci_lo,ci_hi
+đầy đủ (mask + gương),random,100,100,0,0,1.00,0.96,1.00
+đầy đủ (mask + gương),tactical,100,80,1,19,0.81,0.72,0.87
+đầy đủ (mask + gương),minimax2,100,37,0,63,0.37,0.28,0.47
+đầy đủ (mask + gương),minimax4,100,19,0,81,0.19,0.13,0.28
+bỏ gương,random,100,100,0,0,1.00,0.96,1.00
+bỏ gương,tactical,100,71,0,29,0.71,0.61,0.79
+bỏ gương,minimax2,100,35,0,65,0.35,0.26,0.45
+bỏ gương,minimax4,100,21,0,79,0.21,0.14,0.30
+bỏ mask,random,100,73,0,27,0.73,0.64,0.81
+bỏ mask,tactical,100,11,0,89,0.11,0.06,0.19
+bỏ mask,minimax2,100,1,0,99,0.01,0.00,0.05
+bỏ mask,minimax4,100,0,0,100,0.00,0.00,0.04
+bỏ cả hai,random,100,80,0,20,0.80,0.71,0.87
+bỏ cả hai,tactical,100,14,0,86,0.14,0.09,0.22
+bỏ cả hai,minimax2,100,0,0,100,0.00,0.00,0.04
+bỏ cả hai,minimax4,100,0,0,100,0.00,0.00,0.04

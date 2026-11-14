@@ -1,0 +1,11 @@
+model,board,opponent,games,win,draw,loss,score
+models/agent_8x9.zip,8x9,random,100,100,0,0,1.0
+models/agent_8x9.zip,8x9,tactical,100,82,0,18,0.82
+models/agent_8x9.zip,8x9,minimax2,100,42,0,58,0.42
+models/agent_8x9.zip,8x9,minimax4,100,24,0,76,0.24
+models/agent_8x9.zip,8x9,minimax6,33,2,1,30,0.07575757575757576
+models/agent_8x9.zip,8x9,random,100,100,0,0,1.0
+models/agent_8x9.zip,8x9,tactical,100,94,1,5,0.945
+models/agent_8x9.zip,8x9,minimax2,100,70,1,29,0.705
+models/agent_8x9.zip,8x9,minimax4,100,51,3,46,0.525
+models/agent_8x9.zip,8x9,minimax6,33,5,1,27,0.16666666666666666

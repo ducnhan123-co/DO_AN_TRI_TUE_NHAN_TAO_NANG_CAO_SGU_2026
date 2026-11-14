@@ -1,0 +1,156 @@
+{
+  "id": "B3",
+  "description": "Cấp 7/8: số mô phỏng AlphaZero",
+  "board": "8x9",
+  "anchor": {
+    "level": 4,
+    "opts": {
+      "sims": 1000
+    }
+  },
+  "seeds": [
+    0,
+    1
+  ],
+  "games_per_seed": 50,
+  "opening_plies": 4,
+  "date": "2026-11-14 14:47:36",
+  "rows": [
+    {
+      "variant": "sims=10",
+      "opts": {
+        "sims": 10
+      },
+      "n": 100,
+      "win": 18,
+      "draw": 0,
+      "loss": 82,
+      "score": 0.18,
+      "wilson": [
+        0.11700131654251038,
+        0.26667536024213084
+      ],
+      "bootstrap": [
+        0.11,
+        0.26
+      ],
+      "score_as_first": 0.22,
+      "score_as_second": 0.14,
+      "score_by_seed": {
+        "0": 0.16,
+        "1": 0.2
+      },
+      "avg_plies": 36.0,
+      "cost": {
+        "moves": 1584,
+        "mean_ms": 0.49407798357693494,
+        "p95_ms": 0.7750847503302792,
+        "max_ms": 1.3912919985159533,
+        "mean_nodes": 0.0,
+        "mean_sims": 7.215909090909091
+      }
+    },
+    {
+      "variant": "sims=25",
+      "opts": {
+        "sims": 25
+      },
+      "n": 100,
+      "win": 19,
+      "draw": 0,
+      "loss": 81,
+      "score": 0.19,
+      "wilson": [
+        0.1251465399270426,
+        0.27779024070807856
+      ],
+      "bootstrap": [
+        0.12,
+        0.27
+      ],
+      "score_as_first": 0.3,
+      "score_as_second": 0.08,
+      "score_by_seed": {
+        "0": 0.22,
+        "1": 0.16
+      },
+      "avg_plies": 34.29,
+      "cost": {
+        "moves": 1499,
+        "mean_ms": 1.1511019986915425,
+        "p95_ms": 1.7870089001007727,
+        "max_ms": 6.7858330003218725,
+        "mean_nodes": 0.0,
+        "mean_sims": 18.212141427618413
+      }
+    },
+    {
+      "variant": "sims=100",
+      "opts": {
+        "sims": 100
+      },
+      "n": 100,
+      "win": 35,
+      "draw": 0,
+      "loss": 65,
+      "score": 0.35,
+      "wilson": [
+        0.2636410465347802,
+        0.4474573957080203
+      ],
+      "bootstrap": [
+        0.26,
+        0.45
+      ],
+      "score_as_first": 0.4,
+      "score_as_second": 0.3,
+      "score_by_seed": {
+        "0": 0.34,
+        "1": 0.36
+      },
+      "avg_plies": 36.67,
+      "cost": {
+        "moves": 1626,
+        "mean_ms": 4.508728577553061,
+        "p95_ms": 7.193500500306982,
+        "max_ms": 11.043458000131068,
+        "mean_nodes": 0.0,
+        "mean_sims": 71.64821648216483
+      }
+    },
+    {
+      "variant": "sims=400",
+      "opts": {
+        "sims": 400
+      },
+      "n": 100,
+      "win": 46,
+      "draw": 1,
+      "loss": 53,
+      "score": 0.465,
+      "wilson": [
+        0.37035181547264423,
+        0.5622378210506759
+      ],
+      "bootstrap": [
+        0.375,
+        0.565
+      ],
+      "score_as_first": 0.61,
+      "score_as_second": 0.32,
+      "score_by_seed": {
+        "0": 0.44,
+        "1": 0.49
+      },
+      "avg_plies": 39.16,
+      "cost": {
+        "moves": 1756,
+        "mean_ms": 20.137757856490655,
+        "p95_ms": 32.84539600008429,
+        "max_ms": 111.9347089988878,
+        "mean_nodes": 0.0,
+        "mean_sims": 287.9271070615034
+      }
+    }
+  ]
+}

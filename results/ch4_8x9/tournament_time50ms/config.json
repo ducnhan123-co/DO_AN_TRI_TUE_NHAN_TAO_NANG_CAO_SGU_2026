@@ -1,0 +1,33 @@
+{
+  "mode": "time",
+  "board": "8x9",
+  "levels": [
+    3,
+    4,
+    7,
+    8
+  ],
+  "seeds": [
+    0,
+    1
+  ],
+  "games_per_seed": 50,
+  "games_per_pair": 100,
+  "opening_plies": 4,
+  "budget_ms": 50.0,
+  "agents": {
+    "L3": "minimax(t=50ms)",
+    "L4": "mcts(t=50ms)",
+    "L7": "level7_alphazero1000000000",
+    "L8": "level8_alphazero1000000000"
+  },
+  "environment": {
+    "python": "3.13.14",
+    "platform": "macOS-26.4-arm64-arm-64bit-Mach-O",
+    "cpu": "arm",
+    "cpu_count": 10,
+    "date": "2026-11-14 14:44:19",
+    "gpu": "không dùng khi đánh giá",
+    "torch": "2.14.0"
+  }
+}

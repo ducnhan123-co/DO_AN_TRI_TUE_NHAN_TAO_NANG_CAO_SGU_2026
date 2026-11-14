@@ -1,0 +1,221 @@
+{
+  "config": {
+    "mode": "time",
+    "board": "8x9",
+    "levels": [
+      3,
+      4,
+      7,
+      8
+    ],
+    "seeds": [
+      0,
+      1
+    ],
+    "games_per_seed": 50,
+    "games_per_pair": 100,
+    "opening_plies": 4,
+    "budget_ms": 50.0,
+    "agents": {
+      "L3": "minimax(t=50ms)",
+      "L4": "mcts(t=50ms)",
+      "L7": "level7_alphazero1000000000",
+      "L8": "level8_alphazero1000000000"
+    },
+    "environment": {
+      "python": "3.13.14",
+      "platform": "macOS-26.4-arm64-arm-64bit-Mach-O",
+      "cpu": "arm",
+      "cpu_count": 10,
+      "date": "2026-11-14 14:44:19",
+      "gpu": "không dùng khi đánh giá",
+      "torch": "2.14.0"
+    }
+  },
+  "pairs": {
+    "L3 vs L4": {
+      "n": 100,
+      "win": 48,
+      "draw": 0,
+      "loss": 52,
+      "score": 0.48,
+      "wilson": [
+        0.38464384320080547,
+        0.5768359490982345
+      ],
+      "bootstrap": [
+        0.38,
+        0.58
+      ],
+      "score_as_first": 0.5,
+      "score_as_second": 0.46,
+      "score_by_seed": {
+        "0": 0.42,
+        "1": 0.54
+      },
+      "avg_plies": 39.28
+    },
+    "L3 vs L7": {
+      "n": 100,
+      "win": 71,
+      "draw": 1,
+      "loss": 28,
+      "score": 0.715,
+      "wilson": [
+        0.6198573490091175,
+        0.7942348837762017
+      ],
+      "bootstrap": [
+        0.63,
+        0.805
+      ],
+      "score_as_first": 0.75,
+      "score_as_second": 0.68,
+      "score_by_seed": {
+        "0": 0.74,
+        "1": 0.69
+      },
+      "avg_plies": 41.27
+    },
+    "L3 vs L8": {
+      "n": 100,
+      "win": 68,
+      "draw": 0,
+      "loss": 32,
+      "score": 0.68,
+      "wilson": [
+        0.5833719774632081,
+        0.7633098918454312
+      ],
+      "bootstrap": [
+        0.59,
+        0.77
+      ],
+      "score_as_first": 0.74,
+      "score_as_second": 0.62,
+      "score_by_seed": {
+        "0": 0.76,
+        "1": 0.6
+      },
+      "avg_plies": 38.26
+    },
+    "L4 vs L7": {
+      "n": 100,
+      "win": 77,
+      "draw": 0,
+      "loss": 23,
+      "score": 0.77,
+      "wilson": [
+        0.6784543514317231,
+        0.841568452531236
+      ],
+      "bootstrap": [
+        0.68,
+        0.85
+      ],
+      "score_as_first": 0.78,
+      "score_as_second": 0.76,
+      "score_by_seed": {
+        "0": 0.7,
+        "1": 0.84
+      },
+      "avg_plies": 39.95
+    },
+    "L4 vs L8": {
+      "n": 100,
+      "win": 64,
+      "draw": 0,
+      "loss": 36,
+      "score": 0.64,
+      "wilson": [
+        0.542352199811621,
+        0.7272892540950986
+      ],
+      "bootstrap": [
+        0.55,
+        0.73
+      ],
+      "score_as_first": 0.72,
+      "score_as_second": 0.56,
+      "score_by_seed": {
+        "0": 0.6,
+        "1": 0.68
+      },
+      "avg_plies": 39.4
+    },
+    "L7 vs L8": {
+      "n": 100,
+      "win": 48,
+      "draw": 3,
+      "loss": 49,
+      "score": 0.495,
+      "wilson": [
+        0.39901943335773693,
+        0.591350514717023
+      ],
+      "bootstrap": [
+        0.4,
+        0.59
+      ],
+      "score_as_first": 0.52,
+      "score_as_second": 0.47,
+      "score_by_seed": {
+        "0": 0.47,
+        "1": 0.52
+      },
+      "avg_plies": 43.03
+    }
+  },
+  "ranking": [
+    [
+      "L4",
+      0.6433333333333333
+    ],
+    [
+      "L3",
+      0.625
+    ],
+    [
+      "L8",
+      0.395
+    ],
+    [
+      "L7",
+      0.33666666666666667
+    ]
+  ],
+  "cost": {
+    "L3": {
+      "moves": 5359,
+      "mean_ms": 49.32348636665736,
+      "p95_ms": 61.516162200132385,
+      "max_ms": 92.05608400043275,
+      "mean_nodes": 5002.154506437768,
+      "mean_sims": 0.0
+    },
+    "L4": {
+      "moves": 5353,
+      "mean_ms": 44.397981070788916,
+      "p95_ms": 50.09045819933817,
+      "max_ms": 103.78508400026476,
+      "mean_nodes": 0.0,
+      "mean_sims": 4028.5191481412294
+    },
+    "L7": {
+      "moves": 5588,
+      "mean_ms": 38.66672210595096,
+      "p95_ms": 50.442681149525015,
+      "max_ms": 87.02720899964334,
+      "mean_nodes": 0.0,
+      "mean_sims": 624.1336793128131
+    },
+    "L8": {
+      "moves": 5419,
+      "mean_ms": 38.729613558777,
+      "p95_ms": 50.44611249923037,
+      "max_ms": 82.1293750013865,
+      "mean_nodes": 0.0,
+      "mean_sims": 637.4181583317956
+    }
+  }
+}

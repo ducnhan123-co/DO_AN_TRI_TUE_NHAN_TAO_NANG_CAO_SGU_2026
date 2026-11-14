@@ -1,0 +1,188 @@
+{
+  "id": "A1",
+  "description": "Độ sâu minimax (cấp 3)",
+  "board": "8x9",
+  "anchor": {
+    "level": 2,
+    "opts": {}
+  },
+  "seeds": [
+    0,
+    1
+  ],
+  "games_per_seed": 50,
+  "opening_plies": 4,
+  "date": "2026-11-14 14:43:47",
+  "rows": [
+    {
+      "variant": "depth=1",
+      "opts": {
+        "depth": 1
+      },
+      "n": 100,
+      "win": 53,
+      "draw": 0,
+      "loss": 47,
+      "score": 0.53,
+      "wilson": [
+        0.4328868313724773,
+        0.6248934801789626
+      ],
+      "bootstrap": [
+        0.43,
+        0.63
+      ],
+      "score_as_first": 0.5,
+      "score_as_second": 0.56,
+      "score_by_seed": {
+        "0": 0.6,
+        "1": 0.46
+      },
+      "avg_plies": 27.25,
+      "cost": {
+        "moves": 1164,
+        "mean_ms": 0.08550313232512885,
+        "p95_ms": 0.12302869981795084,
+        "max_ms": 0.2597919992695097,
+        "mean_nodes": 7.933848797250859,
+        "mean_sims": 0.0
+      }
+    },
+    {
+      "variant": "depth=2",
+      "opts": {
+        "depth": 2
+      },
+      "n": 100,
+      "win": 78,
+      "draw": 0,
+      "loss": 22,
+      "score": 0.78,
+      "wilson": [
+        0.6892946528499969,
+        0.849988254963442
+      ],
+      "bootstrap": [
+        0.7,
+        0.86
+      ],
+      "score_as_first": 0.82,
+      "score_as_second": 0.74,
+      "score_by_seed": {
+        "0": 0.84,
+        "1": 0.72
+      },
+      "avg_plies": 26.7,
+      "cost": {
+        "moves": 1149,
+        "mean_ms": 0.35866985116341144,
+        "p95_ms": 0.8229751994804244,
+        "max_ms": 1.8798330002027797,
+        "mean_nodes": 31.00348128807659,
+        "mean_sims": 0.0
+      }
+    },
+    {
+      "variant": "depth=3",
+      "opts": {
+        "depth": 3
+      },
+      "n": 100,
+      "win": 90,
+      "draw": 0,
+      "loss": 10,
+      "score": 0.9,
+      "wilson": [
+        0.8256326956323347,
+        0.9447714583868639
+      ],
+      "bootstrap": [
+        0.84,
+        0.96
+      ],
+      "score_as_first": 0.88,
+      "score_as_second": 0.92,
+      "score_by_seed": {
+        "0": 0.94,
+        "1": 0.86
+      },
+      "avg_plies": 25.58,
+      "cost": {
+        "moves": 1099,
+        "mean_ms": 1.3646856178151263,
+        "p95_ms": 3.1847244008531552,
+        "max_ms": 7.515749999583932,
+        "mean_nodes": 119.41583257506825,
+        "mean_sims": 0.0
+      }
+    },
+    {
+      "variant": "depth=4",
+      "opts": {
+        "depth": 4
+      },
+      "n": 100,
+      "win": 89,
+      "draw": 0,
+      "loss": 11,
+      "score": 0.89,
+      "wilson": [
+        0.8136853697209698,
+        0.9374586804477487
+      ],
+      "bootstrap": [
+        0.82,
+        0.95
+      ],
+      "score_as_first": 0.96,
+      "score_as_second": 0.82,
+      "score_by_seed": {
+        "0": 0.94,
+        "1": 0.84
+      },
+      "avg_plies": 25.21,
+      "cost": {
+        "moves": 1080,
+        "mean_ms": 3.889121189835081,
+        "p95_ms": 10.600917300416768,
+        "max_ms": 22.970375001023058,
+        "mean_nodes": 358.77962962962965,
+        "mean_sims": 0.0
+      }
+    },
+    {
+      "variant": "depth=5",
+      "opts": {
+        "depth": 5
+      },
+      "n": 100,
+      "win": 90,
+      "draw": 0,
+      "loss": 10,
+      "score": 0.9,
+      "wilson": [
+        0.8256326956323347,
+        0.9447714583868639
+      ],
+      "bootstrap": [
+        0.84,
+        0.96
+      ],
+      "score_as_first": 0.98,
+      "score_as_second": 0.82,
+      "score_by_seed": {
+        "0": 0.96,
+        "1": 0.84
+      },
+      "avg_plies": 22.84,
+      "cost": {
+        "moves": 962,
+        "mean_ms": 11.866087032226583,
+        "p95_ms": 29.766212799586363,
+        "max_ms": 55.86566700003459,
+        "mean_nodes": 1045.0758835758836,
+        "mean_sims": 0.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "id": "B2",
+  "description": "Cấp 6: shield / flip / tìm kiếm lai",
+  "board": "8x9",
+  "anchor": {
+    "level": 3,
+    "opts": {}
+  },
+  "seeds": [
+    0,
+    1
+  ],
+  "games_per_seed": 50,
+  "opening_plies": 4,
+  "date": "2026-11-14 14:45:34",
+  "rows": [
+    {
+      "variant": "đầy đủ",
+      "opts": {},
+      "n": 100,
+      "win": 27,
+      "draw": 1,
+      "loss": 72,
+      "score": 0.275,
+      "wilson": [
+        0.19703868861332055,
+        0.3696089747508804
+      ],
+      "bootstrap": [
+        0.19,
+        0.36
+      ],
+      "score_as_first": 0.33,
+      "score_as_second": 0.22,
+      "score_by_seed": {
+        "0": 0.21,
+        "1": 0.34
+      },
+      "avg_plies": 32.79,
+      "cost": {
+        "moves": 1428,
+        "mean_ms": 0.09631573880333312,
+        "p95_ms": 0.15984595029294724,
+        "max_ms": 0.3105409996351227,
+        "mean_nodes": 0.0,
+        "mean_sims": 0.0
+      }
+    },
+    {
+      "variant": "không shield",
+      "opts": {
+        "shield": false
+      },
+      "n": 100,
+      "win": 11,
+      "draw": 0,
+      "loss": 89,
+      "score": 0.11,
+      "wilson": [
+        0.06254131955225126,
+        0.18631463027903022
+      ],
+      "bootstrap": [
+        0.05,
+        0.17
+      ],
+      "score_as_first": 0.12,
+      "score_as_second": 0.1,
+      "score_by_seed": {
+        "0": 0.1,
+        "1": 0.12
+      },
+      "avg_plies": 23.73,
+      "cost": {
+        "moves": 967,
+        "mean_ms": 0.08461510548108359,
+        "p95_ms": 0.1566912995258463,
+        "max_ms": 0.3259579989389749,
+        "mean_nodes": 0.0,
+        "mean_sims": 0.0
+      }
+    },
+    {
+      "variant": "không flip",
+      "opts": {
+        "flip_avg": false
+      },
+      "n": 100,
+      "win": 21,
+      "draw": 0,
+      "loss": 79,
+      "score": 0.21,
+      "wilson": [
+        0.14165549531645788,
+        0.2998014930196232
+      ],
+      "bootstrap": [
+        0.13,
+        0.29
+      ],
+      "score_as_first": 0.22,
+      "score_as_second": 0.2,
+      "score_by_seed": {
+        "0": 0.24,
+        "1": 0.18
+      },
+      "avg_plies": 31.91,
+      "cost": {
+        "moves": 1381,
+        "mean_ms": 0.07824653729072376,
+        "p95_ms": 0.14287500016507693,
+        "max_ms": 0.2756670000962913,
+        "mean_nodes": 0.0,
+        "mean_sims": 0.0
+      }
+    },
+    {
+      "variant": "+minimax d2",
+      "opts": {
+        "search_depth": 2
+      },
+      "n": 100,
+      "win": 23,
+      "draw": 2,
+      "loss": 75,
+      "score": 0.24,
+      "wilson": [
+        0.16691211265459965,
+        0.3323251872329213
+      ],
+      "bootstrap": [
+        0.16,
+        0.325
+      ],
+      "score_as_first": 0.23,
+      "score_as_second": 0.25,
+      "score_by_seed": {
+        "0": 0.21,
+        "1": 0.27
+      },
+      "avg_plies": 31.36,
+      "cost": {
+        "moves": 1355,
+        "mean_ms": 0.7320378287669037,
+        "p95_ms": 1.1943456005610642,
+        "max_ms": 1.3888329995097592,
+        "mean_nodes": 0.0,
+        "mean_sims": 0.0
+      }
+    },
+    {
+      "variant": "+minimax d4",
+      "opts": {
+        "search_depth": 4
+      },
+      "n": 100,
+      "win": 45,
+      "draw": 1,
+      "loss": 54,
+      "score": 0.455,
+      "wilson": [
+        0.360870409348044,
+        0.5524591233247963
+      ],
+      "bootstrap": [
+        0.36,
+        0.555
+      ],
+      "score_as_first": 0.46,
+      "score_as_second": 0.45,
+      "score_by_seed": {
+        "0": 0.49,
+        "1": 0.42
+      },
+      "avg_plies": 37.56,
+      "cost": {
+        "moves": 1676,
+        "mean_ms": 7.91364113663734,
+        "p95_ms": 19.95349999924656,
+        "max_ms": 32.7623749999475,
+        "mean_nodes": 0.0,
+        "mean_sims": 0.0
+      }
+    }
+  ]
+}
