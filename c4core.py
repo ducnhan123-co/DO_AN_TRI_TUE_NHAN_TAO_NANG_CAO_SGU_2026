@@ -3,7 +3,8 @@ c4core.py - Luật Connect 4 bằng bitboard (thuần Python int) + các "ngư�
 
 Quy ước
 -------
-* Mỗi cột dùng 7 bit (6 ô + 1 bit đệm phía trên) -> bit = col * 7 + row_from_bottom.
+* Mỗi cột dùng H = ROWS + 1 bit (ROWS ô + 1 bit đệm phía trên) -> bit = col * H + row_from_bottom
+  (bàn mặc định 8x9: H = 9, tổng 81 bit; bàn 6x7: H = 7, tổng 49 bit).
   Bit đệm luôn = 0 nên các phép dịch bit không bao giờ "nối" nhầm giữa hai cột.
 * "me" / "opp" là bitboard quân của người sắp đi / người còn lại (góc nhìn của người đi).
 * Mọi Player có hàm  act(me, opp) -> cột (0..COLS-1).
@@ -94,7 +95,7 @@ def mirror_cols(x: np.ndarray) -> np.ndarray:
 
 
 def grid_to_bb(grid: np.ndarray, symbol: int):
-    """grid (6x7 gồm 0/1/2, hàng 0 = trên) -> (bitboard của `symbol`, bitboard của đối thủ)."""
+    """grid (ROWS x COLS gồm 0/1/2, hàng 0 = trên) -> (bitboard của `symbol`, bitboard của đối thủ)."""
     a = b = 0
     for r in range(ROWS):
         for c in range(COLS):
