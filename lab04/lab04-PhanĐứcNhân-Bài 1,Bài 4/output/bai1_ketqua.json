@@ -1,0 +1,281 @@
+{
+  "n": 10,
+  "seed": 1111,
+  "points": [
+    [
+      8,
+      62
+    ],
+    [
+      12,
+      86
+    ],
+    [
+      14,
+      8
+    ],
+    [
+      20,
+      11
+    ],
+    [
+      24,
+      22
+    ],
+    [
+      28,
+      55
+    ],
+    [
+      34,
+      52
+    ],
+    [
+      42,
+      76
+    ],
+    [
+      61,
+      51
+    ],
+    [
+      81,
+      12
+    ]
+  ],
+  "neighbors": [
+    [
+      1,
+      2,
+      4,
+      5
+    ],
+    [
+      0,
+      5,
+      7
+    ],
+    [
+      0,
+      3,
+      4,
+      9
+    ],
+    [
+      2,
+      4,
+      9
+    ],
+    [
+      0,
+      2,
+      3,
+      5,
+      6,
+      8,
+      9
+    ],
+    [
+      0,
+      1,
+      4,
+      6,
+      7
+    ],
+    [
+      4,
+      5,
+      7,
+      8
+    ],
+    [
+      1,
+      5,
+      6,
+      8
+    ],
+    [
+      4,
+      6,
+      7,
+      9
+    ],
+    [
+      2,
+      3,
+      4,
+      8
+    ]
+  ],
+  "edges": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      0,
+      4
+    ],
+    [
+      0,
+      5
+    ],
+    [
+      1,
+      5
+    ],
+    [
+      1,
+      7
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      2,
+      9
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      3,
+      9
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      4,
+      6
+    ],
+    [
+      4,
+      8
+    ],
+    [
+      4,
+      9
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      6,
+      8
+    ],
+    [
+      7,
+      8
+    ],
+    [
+      8,
+      9
+    ]
+  ],
+  "num_edges": 21,
+  "degrees": [
+    4,
+    3,
+    4,
+    3,
+    7,
+    5,
+    4,
+    4,
+    4,
+    4
+  ],
+  "k4": [
+    [
+      2,
+      3,
+      4,
+      9
+    ]
+  ],
+  "backtracking_4": {
+    "assignment": {
+      "0": "red",
+      "1": "blue",
+      "2": "blue",
+      "3": "red",
+      "4": "green",
+      "5": "orange",
+      "6": "red",
+      "7": "green",
+      "8": "blue",
+      "9": "orange"
+    },
+    "count": 11,
+    "time_ms": 0.05037499977333937,
+    "num_colors_used": 4
+  },
+  "backtracking_3": {
+    "assignment": null,
+    "count": 70,
+    "time_ms": 0.25312500110885594
+  },
+  "test_cases": [
+    {
+      "case": "Rong {}",
+      "complete": false,
+      "consistent": true,
+      "expected_complete": false,
+      "expected_consistent": true,
+      "ok": true
+    },
+    {
+      "case": "Mot phan {'0':'red','1':'blue','2':'green'}",
+      "complete": false,
+      "consistent": true,
+      "expected_complete": false,
+      "expected_consistent": true,
+      "ok": true
+    },
+    {
+      "case": "Hai dinh ke cung mau {'2':'red','3':'red'}",
+      "complete": false,
+      "consistent": false,
+      "expected_complete": false,
+      "expected_consistent": false,
+      "ok": true
+    },
+    {
+      "case": "Day du nhung cung mau (tat ca red)",
+      "complete": true,
+      "consistent": false,
+      "expected_complete": true,
+      "expected_consistent": false,
+      "ok": true
+    },
+    {
+      "case": "Day du va hop le (loi giai 4 mau)",
+      "complete": true,
+      "consistent": true,
+      "expected_complete": true,
+      "expected_consistent": true,
+      "ok": true
+    }
+  ]
+}

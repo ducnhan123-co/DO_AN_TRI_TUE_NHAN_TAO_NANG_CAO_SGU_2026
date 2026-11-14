@@ -1,0 +1,50 @@
+=== DO THI DELAUNAY n = 10, seed = 1111 ===
+Toa do diem (da sap xep theo x):
+  0: (8, 62)
+  1: (12, 86)
+  2: (14, 8)
+  3: (20, 11)
+  4: (24, 22)
+  5: (28, 55)
+  6: (34, 52)
+  7: (42, 76)
+  8: (61, 51)
+  9: (81, 12)
+Danh sach neighbors:
+  0: [1, 2, 4, 5]
+  1: [0, 5, 7]
+  2: [0, 3, 4, 9]
+  3: [2, 4, 9]
+  4: [0, 2, 3, 5, 6, 8, 9]
+  5: [0, 1, 4, 6, 7]
+  6: [4, 5, 7, 8]
+  7: [1, 5, 6, 8]
+  8: [4, 6, 7, 9]
+  9: [2, 3, 4, 8]
+So canh (rang buoc) = 21
+So canh neu luu ca hai chieu = 42
+Bac cua tung dinh = [4, 3, 4, 3, 7, 5, 4, 4, 4, 4]
+Cac K4 trong do thi = [(2, 3, 4, 9)]
+
+=== DINH NGHIA CSP ===
+X = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+|D| (4 mau) = 4; D_i = ['red', 'blue', 'green', 'orange']
+|C| = 21 rang buoc nhi phan color(i) != color(j)
+
+=== BACKTRACKING VOI 4 MAU ===
+Ket qua: {'0': 'red', '1': 'blue', '2': 'blue', '3': 'red', '4': 'green', '5': 'orange', '6': 'red', '7': 'green', '8': 'blue', '9': 'orange'}
+COUNT = 11 nut, thoi gian = 0.05 ms
+So mau dung = 4
+complete = True, consistent = True
+
+=== BACKTRACKING VOI 3 MAU ===
+Ket qua: None
+COUNT = 70 nut, thoi gian = 0.25 ms
+Khong ton tai loi giai 3 mau vi do thi chua K4 [(2, 3, 4, 9)]
+
+=== KIEM THU complete() / consistent() ===
+Rong {}: complete=False, consistent=True (ky vong False/True) -> OK
+Mot phan {'0':'red','1':'blue','2':'green'}: complete=False, consistent=True (ky vong False/True) -> OK
+Hai dinh ke cung mau {'2':'red','3':'red'}: complete=False, consistent=False (ky vong False/False) -> OK
+Day du nhung cung mau (tat ca red): complete=True, consistent=False (ky vong True/False) -> OK
+Day du va hop le (loi giai 4 mau): complete=True, consistent=True (ky vong True/True) -> OK
