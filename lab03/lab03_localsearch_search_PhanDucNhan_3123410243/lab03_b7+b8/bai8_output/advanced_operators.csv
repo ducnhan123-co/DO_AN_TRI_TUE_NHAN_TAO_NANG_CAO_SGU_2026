@@ -1,0 +1,11 @@
+n,operator,neigh_size,avg_final,pct_optimal,avg_time_to_sol_ms
+8,standard,56,1.31,14,0.375
+8,single-step,16,3.69,0,
+8,column-swap,28,4.6,0,
+8,dual-queen,1372,0.77,26,7.522
+8,adaptive,56,1.29,17,0.448
+12,standard,132,1.94,3,1.796
+12,single-step,24,5.42,0,
+12,column-swap,66,6.03,0,
+12,dual-queen,7986,1.24,5,44.715
+12,adaptive,132,1.69,6,1.685

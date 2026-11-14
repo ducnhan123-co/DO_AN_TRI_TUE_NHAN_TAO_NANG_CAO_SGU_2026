@@ -1,0 +1,16 @@
+algo,n,avg_time_ms
+Steepest asc. HC,4,0.04664262135823568
+Efficient Stochastic HC,4,0.13335545857747397
+Simulated Annealing,4,0.26073455810546875
+Steepest asc. HC,8,0.7276614507039388
+Efficient Stochastic HC,8,1.779802640279134
+Simulated Annealing,8,3.758398691813151
+Steepest asc. HC,12,4.526845614115397
+Efficient Stochastic HC,12,6.038188934326172
+Simulated Annealing,12,7.297563552856445
+Steepest asc. HC,16,14.265314737955729
+Efficient Stochastic HC,16,13.571516672770182
+Simulated Annealing,16,7.948962847391765
+Steepest asc. HC,20,23.71808687845866
+Efficient Stochastic HC,20,17.31712818145752
+Simulated Annealing,20,7.256476084391276

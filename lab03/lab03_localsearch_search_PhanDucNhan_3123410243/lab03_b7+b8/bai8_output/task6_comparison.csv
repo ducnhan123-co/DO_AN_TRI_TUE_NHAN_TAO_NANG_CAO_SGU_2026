@@ -1,0 +1,9 @@
+algo,n,avg_time_ms,avg_conflicts,pct_optimal
+Steepest asc. HC,4,0.049,0.54,47
+Ineff. Stochastic HC,4,0.05,0.77,37
+Efficient Stochastic HC,4,0.135,0.81,33
+Simulated Annealing,4,0.217,0.0,100
+Steepest asc. HC,8,0.62,1.17,21
+Ineff. Stochastic HC,8,0.998,1.19,15
+Efficient Stochastic HC,8,1.554,1.48,8
+Simulated Annealing,8,3.17,0.22,78
