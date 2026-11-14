@@ -1,0 +1,7 @@
+Maze,Algorithm,Cost,Expanded,Max depth,Max frontier,Time ms
+small,BFS,19,93,19,9,0.175
+small,DFS,37,69,37,5,0.36
+medium,BFS,68,270,68,9,0.456
+medium,DFS,244,263,244,13,1.545
+open,BFS,54,683,54,25,1.343
+open,DFS,292,294,292,234,3.987

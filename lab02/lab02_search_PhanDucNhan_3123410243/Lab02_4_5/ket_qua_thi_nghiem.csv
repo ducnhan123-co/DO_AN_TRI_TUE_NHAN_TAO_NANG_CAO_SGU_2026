@@ -1,0 +1,27 @@
+Maze,Thuật toán,Path cost,Nút mở rộng,Max depth,Max frontier,Thời gian (ms)
+small,BFS,19.0,93,19,9,0.43
+small,DFS + cycle check,37.0,94,44,5,0.58
+small,GBFS (Manhattan),29.0,40,29,5,0.22
+small,A* (Manhattan),19.0,52,19,7,0.31
+small,A* (Euclidean),19.0,56,19,7,0.33
+small,Weighted A* (w=5),29.0,42,29,5,0.26
+small,IDS,19.0,1052,19,5,6.84
+medium,BFS,68.0,270,68,9,1.14
+medium,DFS + cycle check,244.0,268,244,14,3.06
+medium,GBFS (Manhattan),152.0,156,152,8,0.74
+medium,A* (Manhattan),68.0,218,68,8,1.01
+medium,A* (Euclidean),68.0,225,68,8,1.06
+medium,Weighted A* (w=5),102.0,227,102,10,1.04
+medium,IDS,68.0,13103,68,9,94.02
+large,BFS,210.0,622,210,8,2.31
+large,DFS + cycle check,210.0,520,222,34,5.6
+large,GBFS (Manhattan),210.0,457,210,25,2.1
+large,A* (Manhattan),210.0,543,210,12,2.48
+large,A* (Euclidean),210.0,555,210,10,2.59
+large,Weighted A* (w=5),210.0,481,210,23,2.21
+open,BFS,54.0,683,54,25,2.97
+open,DFS + cycle check,,100000,588,511,3572.06
+open,GBFS (Manhattan),54.0,773,57,64,5.03
+open,A* (Manhattan),54.0,212,54,185,1.5
+open,A* (Euclidean),54.0,517,54,51,3.29
+open,Weighted A* (w=5),54.0,634,54,64,3.99
