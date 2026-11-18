@@ -1,4 +1,8 @@
-"""Kiểm thử hồi quy cho các lỗi đã được báo cáo/sửa. Chạy: python test_regression.py"""
+"""Kiểm thử hồi quy cho các lỗi đã được báo cáo/sửa. Chạy: python tests/test_regression.py"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # thư mục gốc dự án
 import json
 import os
 import subprocess
@@ -9,9 +13,9 @@ import zipfile
 import numpy as np
 import torch
 
-from c4core import (BOARD_MASK, BOT, COLS, ROWS, MinimaxPlayer, RandomPlayer, TacticalPlayer, drop_bit, match,
+from c4.core import (BOARD_MASK, BOT, COLS, ROWS, MinimaxPlayer, RandomPlayer, TacticalPlayer, drop_bit, match,
                     minimax_move, minimax_scores)
-from c4env import Connect4Env, OpponentMixture, TorchPlayer, check_board, load_model, save_model
+from c4.env import Connect4Env, OpponentMixture, TorchPlayer, check_board, load_model, save_model
 
 torch.set_num_threads(1)
 OK = []
@@ -56,7 +60,7 @@ def main():
           max(minimax_scores(0, 0, 3).values()) == minimax_scores(0, 0, 3)[minimax_move(0, 0, 3)])
 
     # model sai kích thước bàn bị từ chối ngay khi nạp (models/agent_6x7.zip trên bàn 8x9)
-    wrong = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models",
+    wrong = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models",
                          "agent_6x7.zip" if (ROWS, COLS) == (8, 9) else "agent_8x9.zip")
     if os.path.exists(wrong):
         check("model sai cỡ bàn -> ValueError khi nạp", raises(lambda: check_board(load_model(wrong)), ValueError))
@@ -99,7 +103,7 @@ def main():
         check("chế độ lai chạy đủ ván không lỗi", r["win"] + r["draw"] + r["loss"] == 6)
 
     # ---- thang 8 cấp độ
-    import levels
+    from c4 import levels
     for n in range(1, 9):
         if not levels.is_ready(n):
             continue

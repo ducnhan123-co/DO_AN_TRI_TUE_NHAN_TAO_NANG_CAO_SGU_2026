@@ -16,7 +16,7 @@ import time
 
 import numpy as np
 
-from c4core import (BOT, COLMASK, COLS, H, ROWS, _require_moves, drop_bit, encode, has_won, is_full,
+from c4.core import (BOT, COLMASK, COLS, H, ROWS, _require_moves, drop_bit, encode, has_won, is_full,
                     legal_mask, mirror_cols, safe_cols, sensible_mask, tactical_override)
 
 
