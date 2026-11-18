@@ -19,9 +19,9 @@ import sys
 
 
 
-import boardenv  # noqa: F401,E402  (đặt cỡ bàn từ --rows/--cols/--board TRƯỚC khi import c4core)
+from c4 import boardenv  # noqa: F401,E402  (đặt cỡ bàn từ --rows/--cols/--board TRƯỚC khi import c4core)
 
-from c4core import COLS, ROWS, MinimaxPlayer, RandomPlayer, TacticalPlayer  # noqa: E402
+from c4.core import COLS, ROWS, MinimaxPlayer, RandomPlayer, TacticalPlayer  # noqa: E402
 
 MODES = ("random", "tactical", "minimax", "agent", "aivai", "level")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,7 +37,7 @@ def exists(p):
 
 
 def load_agent(path, search=0):
-    from c4env import TorchPlayer, check_board, load_model
+    from c4.env import TorchPlayer, check_board, load_model
     m = check_board(load_model(path))
     return TorchPlayer(m.policy, deterministic=True, flip_avg=True, search_depth=search, name=os.path.basename(path))
 
@@ -69,7 +69,7 @@ def ask_depth(default=4):
 
 def on_level(n):
     """Tạo đối thủ cho cấp n (1-8). Trả về (người chơi, tiêu đề) hoặc chuỗi thông báo lỗi."""
-    import levels
+    from c4 import levels
     try:
         return levels.make_level(n), f"{levels.describe(n)} ({ROWS}x{COLS})"
     except (FileNotFoundError, ValueError) as e:
@@ -123,7 +123,7 @@ def run_arena(opts, state=None):
     Nếu người dùng bấm đổi bàn thì chạy lại chương trình với bàn mới (kích thước bàn cố định lúc import) và giữ lựa chọn."""
     import json
     import pygame
-    from gui import ArenaApp
+    from c4.gui import ArenaApp
     app = ArenaApp(state=state, cell=opts["cell"])
     res = app.run()
     pygame.quit()
@@ -140,7 +140,7 @@ def run_mode(mode, opts):
     if kw is None:
         return
     import pygame
-    from gui import App
+    from c4.gui import App
 
     def can_switch(nr, nc):
         if mode in ("agent", "aivai") and not exists(model_path(nr, nc)):

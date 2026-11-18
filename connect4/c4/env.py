@@ -20,7 +20,7 @@ import torch.nn as nn
 from gymnasium import spaces
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
-from c4core import (
+from c4.core import (
     COLS,
     ROWS,
     MinimaxPlayer,
@@ -282,6 +282,6 @@ class Connect4Env(gym.Env):
         return self._obs(), 0.0, False, False, {}
 
     def render(self):
-        from c4core import bb_to_grid
+        from c4.core import bb_to_grid
         g = bb_to_grid(self.me, self.opp, 1)
         return "\n".join("".join(".XO"[v] for v in row) for row in g)

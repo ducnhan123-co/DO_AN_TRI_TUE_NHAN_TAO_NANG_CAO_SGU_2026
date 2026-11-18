@@ -24,9 +24,9 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from c4core import COLS, ROWS, drop_bit, has_won, is_full, legal_cols
-from expstats import percentile, wilson_interval
-from levels import BASE_DIR, LEVEL_NAMES, make_level
+from c4.core import COLS, ROWS, drop_bit, has_won, is_full, legal_cols
+from c4.expstats import percentile, wilson_interval
+from c4.levels import BASE_DIR, LEVEL_NAMES, make_level
 
 LOG_DIR = os.path.join(BASE_DIR, "results", "play_log")
 BOARD = f"{ROWS}x{COLS}"

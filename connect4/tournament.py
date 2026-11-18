@@ -2,7 +2,7 @@
 tournament.py - Giải đấu round-robin giữa các cấp (1-8) theo mục 3.5 của đề cuối kỳ.
 
     python tournament.py --board 6x7 --levels 1-4 --seeds 0,1 --games-per-seed 100 --mode default
-    python tournament.py --board 8x9 --levels 1-8 --mode all          # cần đã train cấp 5-8 (xem HUONG_DAN_TRAIN.md)
+    python tournament.py --board 8x9 --levels 1-8 --mode all          # cần đã train cấp 5-8 (xem docs/HUONG_DAN_TRAIN.md)
     python tournament.py --budget-ms 100 --mode time                  # cùng thời gian/nước cho cấp 3, 4, 7, 8
 
 Thiết kế công bằng
@@ -16,7 +16,7 @@ Thiết kế công bằng
 * Log thô từng ván (JSONL): nước đi, ms/nước, số nút (minimax), số mô phỏng (MCTS/AlphaZero).
 * Thống kê: thắng/hòa/thua, score, Wilson 95%, bootstrap 95%, theo bên đi trước/sau và theo seed, p95 độ trễ.
 """
-import boardenv  # noqa: F401  (phải đứng đầu: đặt kích thước bàn trước khi import c4core)
+from c4 import boardenv  # noqa: F401  (phải đứng đầu: đặt kích thước bàn trước khi import c4core)
 
 import argparse
 import itertools
@@ -27,10 +27,11 @@ import random
 import sys
 import time
 
-from arena import budget_params, timed_act
-from c4core import COLS, ROWS, drop_bit, has_won, is_full, legal_cols
-from expstats import bootstrap_score_ci, mean, percentile, wilson_interval
-from levels import BASE_DIR, LEVEL_NAMES, is_ready, make_level
+from c4 import expio
+from c4.arena import budget_params, timed_act
+from c4.core import COLS, ROWS, drop_bit, has_won, is_full, legal_cols
+from c4.expstats import bootstrap_score_ci, mean, percentile, wilson_interval
+from c4.levels import BASE_DIR, LEVEL_NAMES, is_ready, make_level
 
 BOARD = f"{ROWS}x{COLS}"
 TIME_LEVELS = (3, 4, 7, 8)
@@ -170,53 +171,31 @@ def agent_cost(cost_lists):
     return out
 
 
-def environment_info():
-    cpu = ""
-    try:
-        with open("/proc/cpuinfo", encoding="utf-8") as f:
-            for line in f:
-                if line.startswith("model name"):
-                    cpu = line.split(":", 1)[1].strip()
-                    break
-    except OSError:
-        pass
-    info = {"python": sys.version.split()[0], "platform": platform.platform(), "cpu": cpu or platform.processor(),
-            "cpu_count": os.cpu_count(), "date": time.strftime("%Y-%m-%d %H:%M:%S"), "gpu": "không dùng khi đánh giá"}
-    try:
-        import torch
-        info["torch"] = torch.__version__
-    except Exception:  # noqa: BLE001
-        pass
-    return info
-
-
-def run_round_robin(levels, mode, seeds, games_per_seed, opening_plies, budget_ms, out_dir, resume=True, progress=True):
-    os.makedirs(os.path.join(out_dir, "pairs"), exist_ok=True)
-    specs = []
-    for n in levels:
-        o = level_opts(n, mode, budget_ms)
-        specs.append((f"L{n}", n, o))
-    config = {"mode": mode, "board": BOARD, "levels": levels, "seeds": list(seeds), "games_per_seed": games_per_seed,
-              "games_per_pair": games_per_seed * len(seeds), "opening_plies": opening_plies,
-              "budget_ms": budget_ms if mode == "time" else None,
-              "agents": {l: make_level(n, seed=0, **o).name for l, n, o in specs}, "environment": environment_info()}
-    with open(os.path.join(out_dir, "config.json"), "w", encoding="utf-8") as f:
-        json.dump(config, f, indent=2, ensure_ascii=False)
+def run_round_robin(levels, mode, seeds, games_per_seed, opening_plies, budget_ms, out_dir, resume=True, progress=True,
+                    meta=None):
+    """Chạy round-robin, ghi vào thư mục lần chạy `out_dir` theo cấu trúc chuẩn (xem expio.py) và cập nhật nhật ký.
+    meta: dict tuỳ chọn {goal, hypothesis, author, notes, run_id, argv}."""
+    meta = meta or {}
+    run_id = meta.get("run_id") or os.path.basename(os.path.normpath(out_dir))
+    os.makedirs(os.path.join(out_dir, "data", "pairs"), exist_ok=True)
+    specs = [(f"L{n}", n, level_opts(n, mode, budget_ms)) for n in levels]
+    players = {l: make_level(n, seed=0, **o) for l, n, o in specs}
+    params = {l: expio.agent_params(players[l], n, o) for l, n, o in specs}
     pairs = list(itertools.combinations(range(len(specs)), 2))
-    t0 = time.time()
+    t0, started = time.time(), expio.now()
     results = {}
-    with open(os.path.join(out_dir, "games.jsonl"), "a" if resume else "w", encoding="utf-8") as sink:
+    gpath = os.path.join(out_dir, "data", "games.jsonl")
+    with open(gpath, "a" if resume else "w", encoding="utf-8") as sink:
         for k, (i, j) in enumerate(pairs):
             la, lb = specs[i][0], specs[j][0]
-            pf = os.path.join(out_dir, "pairs", f"{la}_vs_{lb}.json")
+            pf = os.path.join(out_dir, "data", "pairs", f"{la}_vs_{lb}.json")
             if resume and os.path.exists(pf):
                 with open(pf, encoding="utf-8") as f:
                     results[(la, lb)] = json.load(f)
                 continue
             if progress:
-                print(f"[{k + 1}/{len(pairs)}] {la} vs {lb} ({config['agents'][la]} vs {config['agents'][lb]}) ...", flush=True)
-            recs = run_pair(specs[i], specs[j], seeds, games_per_seed, opening_plies, pair_idx=k, sink=sink,
-                            tag=mode)
+                print(f"[{k + 1}/{len(pairs)}] {la} vs {lb} ({players[la].name} vs {players[lb].name}) ...", flush=True)
+            recs = run_pair(specs[i], specs[j], seeds, games_per_seed, opening_plies, pair_idx=k, sink=sink, tag=mode)
             res = {"summary": summarize_pair(recs), "cost": pair_costs(recs, la, lb)}
             with open(pf, "w", encoding="utf-8") as f:
                 json.dump(res, f)
@@ -225,12 +204,41 @@ def run_round_robin(levels, mode, seeds, games_per_seed, opening_plies, budget_m
                 s = res["summary"]
                 print(f"    {la}: {s['win']}W/{s['draw']}D/{s['loss']}L  score={s['score']:.3f} "
                       f"Wilson[{s['wilson'][0]:.3f},{s['wilson'][1]:.3f}]  ({time.time() - t0:.0f}s)", flush=True)
-    write_summary(out_dir, config, specs, results)
+    duration = time.time() - t0
+    labels = [s[0] for s in specs]
+    md, ranking, cost, pair_json = build_summary(mode, budget_ms, seeds, games_per_seed, opening_plies, labels, results)
+    app_cfg = {"run_id": run_id, "kind": "tournament", "mode": mode, "board": BOARD, "rows": ROWS, "cols": COLS,
+               "levels": levels, "seeds": list(seeds), "games_per_seed": games_per_seed,
+               "games_per_pair": games_per_seed * len(seeds), "opening_plies": opening_plies,
+               "budget_ms": budget_ms if mode == "time" else None, "command": meta.get("argv"),
+               "goal": meta.get("goal", ""), "hypothesis": meta.get("hypothesis", ""), "author": meta.get("author", ""),
+               "notes": meta.get("notes", ""), "started": started, "ended": expio.now(),
+               "duration_s": round(duration, 1), "code_hash": expio.code_hash(), "environment": expio.environment()}
+    pair_rows = [{"mode": mode, "A": k.split(" vs ")[0], "B": k.split(" vs ")[1], "games": s["n"], "win": s["win"],
+                  "draw": s["draw"], "loss": s["loss"], "score_A": round(s["score"], 4), "wilson_lo": round(s["wilson"][0], 4),
+                  "wilson_hi": round(s["wilson"][1], 4), "boot_lo": round(s["bootstrap"][0], 4),
+                  "boot_hi": round(s["bootstrap"][1], 4), "score_A_first": round(s["score_as_first"], 4),
+                  "score_A_second": round(s["score_as_second"], 4)} for k, s in pair_json.items()]
+    records = expio.read_games(gpath)
+    _, overall = expio.finalize(out_dir, run_id, "tournament", app_cfg, params, records, True, pair_rows,
+                                {"ranking": ranking, "cost": cost}, md)
+    top = ", ".join(f"{l} ({sc:.2f})" for l, sc in ranking[:3])
+    expio.journal_write(
+        {"Mã TN": run_id, "Bắt đầu": started, "Thời lượng (phút)": round(duration / 60, 2), "Loại": f"Round-robin ({mode})",
+         "Người thực hiện": meta.get("author", ""), "Mục tiêu": meta.get("goal", ""), "Giả thuyết": meta.get("hypothesis", ""),
+         "Bàn cờ": BOARD, "Đối tượng": "Cấp " + ",".join(map(str, levels)),
+         "Ngân sách": f"{budget_ms} ms/nước" if mode == "time" else "mặc định", "Seeds": ",".join(map(str, seeds)),
+         "Ván/cặp": app_cfg["games_per_pair"], "Khai cuộc (nước)": opening_plies, "Lệnh chạy": " ".join(meta.get("argv") or []),
+         "Mã băm code": app_cfg["code_hash"], "Phần cứng": f"{app_cfg['environment']['cpu']} x{app_cfg['environment']['cpu_count']}",
+         "Thư mục kết quả": os.path.relpath(out_dir, expio.BASE), "Kết quả chính (tự động)": f"Top 3 theo score TB: {top}",
+         "Bất thường / ghi chú": meta.get("notes", ""), "Trạng thái": "Hoàn tất"},
+        pair_rows=[[run_id, r["mode"], r["A"], r["B"], r["games"], r["win"], r["draw"], r["loss"], r["score_A"], r["wilson_lo"],
+                    r["wilson_hi"], r["boot_lo"], r["boot_hi"], r["score_A_first"], r["score_A_second"]] for r in pair_rows],
+        agent_rows=expio.agent_rows_for_journal(run_id, overall))
     return results
 
 
-def write_summary(out_dir, config, specs, results):
-    labels = [s[0] for s in specs]
+def build_summary(mode, budget_ms, seeds, games_per_seed, opening_plies, labels, results):
     pair_json, all_cost = {}, {l: [] for l in labels}
     total = {l: [0.0, 0] for l in labels}  # tổng điểm, số ván
     for (la, lb), res in results.items():
@@ -244,11 +252,9 @@ def write_summary(out_dir, config, specs, results):
         total[lb][1] += s["n"]
     ranking = sorted(((l, total[l][0] / total[l][1] if total[l][1] else float("nan")) for l in labels), key=lambda x: -x[1])
     cost = agent_cost(all_cost)
-    with open(os.path.join(out_dir, "summary.json"), "w", encoding="utf-8") as f:
-        json.dump({"config": config, "pairs": pair_json, "ranking": ranking, "cost": cost}, f, indent=2, ensure_ascii=False)
-    md = [f"# Round-robin ({config['mode']}) - bàn {config['board']}", "",
-          f"Mỗi cặp {config['games_per_pair']} ván ({len(config['seeds'])} seed x {config['games_per_seed']}), "
-          f"khai cuộc {config['opening_plies']} nước, đổi bên. " + (f"Ngân sách {config['budget_ms']} ms/nước." if config["budget_ms"] else ""),
+    md = [f"# Round-robin ({mode}) - bàn {BOARD}", "",
+          f"Mỗi cặp {games_per_seed * len(seeds)} ván ({len(seeds)} seed x {games_per_seed}), khai cuộc {opening_plies} nước, đổi bên. "
+          + (f"Ngân sách {budget_ms} ms/nước." if mode == "time" else ""),
           "", "## Xếp hạng (điểm TB so với mọi cấp khác)", "", "| Hạng | Cấp | Điểm TB |", "|---|---|---|"]
     for r, (l, sc) in enumerate(ranking, 1):
         md.append(f"| {r} | {l} {LEVEL_NAMES[int(l[1:])]} | {sc:.3f} |")
@@ -262,8 +268,7 @@ def write_summary(out_dir, config, specs, results):
         c = cost.get(l)
         if c:
             md.append(f"| {l} | {c['moves']} | {c['mean_ms']:.2f} | {c['p95_ms']:.2f} | {c['max_ms']:.2f} | {c['mean_nodes']:.0f} | {c['mean_sims']:.0f} |")
-    with open(os.path.join(out_dir, "summary.md"), "w", encoding="utf-8") as f:
-        f.write("\n".join(md) + "\n")
+    return "\n".join(md) + "\n", ranking, cost, pair_json
 
 
 def main():
@@ -277,8 +282,13 @@ def main():
     ap.add_argument("--opening-plies", type=int, default=4)
     ap.add_argument("--mode", choices=("default", "time", "all"), default="default")
     ap.add_argument("--budget-ms", type=float, default=100.0, help="ms/nước cho chế độ time")
-    ap.add_argument("--out", default=None)
-    ap.add_argument("--no-resume", action="store_true", help="chạy lại từ đầu, bỏ các cặp đã xong")
+    ap.add_argument("--tag", default="", help="nhãn ngắn thêm vào mã thí nghiệm, vd baseline")
+    ap.add_argument("--goal", default="", help="MỤC TIÊU thí nghiệm (ghi vào nhật ký)")
+    ap.add_argument("--hypothesis", default="", help="GIẢ THUYẾT, viết trước khi xem kết quả (ghi vào nhật ký)")
+    ap.add_argument("--author", default="", help="người thực hiện")
+    ap.add_argument("--notes", default="", help="ghi chú / bất thường")
+    ap.add_argument("--out", default=None, help="thư mục lần chạy (mặc định results/runs/<mã-thí-nghiệm>)")
+    ap.add_argument("--resume", default=None, help="chạy tiếp một thư mục lần chạy dở (bỏ qua các cặp đã xong)")
     a = ap.parse_args()
     if a.games_per_seed % 2:
         raise SystemExit("--games-per-seed phải chẵn (mỗi khai cuộc chơi 2 lần đổi bên)")
@@ -286,17 +296,30 @@ def main():
     levels = parse_levels(a.levels)
     missing = [n for n in levels if not is_ready(n)]
     if missing:
-        print(f"Cấp {missing} chưa có model cho bàn {BOARD} -> bỏ qua (xem HUONG_DAN_TRAIN.md để train).")
+        print(f"Cấp {missing} chưa có model cho bàn {BOARD} -> bỏ qua (xem docs/HUONG_DAN_TRAIN.md để train).")
         levels = [n for n in levels if n not in missing]
     if len(levels) < 2:
         raise SystemExit("cần ít nhất 2 cấp để đấu")
     if a.games_per_seed * len(seeds) < 100:
         print("CẢNH BÁO: đề yêu cầu >= 100 ván/cặp; hiện chỉ", a.games_per_seed * len(seeds))
     modes = ("default", "time") if a.mode == "all" else (a.mode,)
+    if a.resume and len(modes) > 1:
+        raise SystemExit("--resume chỉ dùng với một chế độ (--mode default hoặc --mode time)")
     for m in modes:
-        out = a.out or os.path.join(BASE_DIR, "results", f"tournament_{BOARD}", m)
-        print(f"\n=== Chế độ {m} -> {out}")
-        run_round_robin(levels, m, seeds, a.games_per_seed, a.opening_plies, a.budget_ms, out, resume=not a.no_resume)
+        if a.resume:
+            out = a.resume
+            run_id = os.path.basename(os.path.normpath(out))
+        else:
+            run_id = expio.new_run_id("tournament", BOARD, "_".join(x for x in (m, a.tag) if x))
+            out = a.out if (a.out and len(modes) == 1) else expio.make_run_dir(run_id)
+        os.makedirs(out, exist_ok=True)
+        meta = dict(goal=a.goal, hypothesis=a.hypothesis, author=a.author, notes=a.notes, run_id=run_id,
+                    argv=["python"] + sys.argv)
+        with expio.Tee(os.path.join(out, "run.log.txt")):
+            print(f"\n=== {run_id}  (chế độ {m}) -> {out}")
+            run_round_robin(levels, m, seeds, a.games_per_seed, a.opening_plies, a.budget_ms, out, resume=bool(a.resume),
+                            meta=meta)
+            print(f"Đã ghi nhật ký: {os.path.relpath(expio.JOURNAL)}")
     print("Xong.")
 
 

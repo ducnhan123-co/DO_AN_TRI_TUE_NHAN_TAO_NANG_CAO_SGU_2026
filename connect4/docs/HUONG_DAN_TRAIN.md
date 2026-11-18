@@ -9,8 +9,8 @@ Mọi lệnh chạy ở thư mục gốc của dự án.
 python -m venv .venv
 # Windows: .venv\Scripts\activate      Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt      # numpy, torch, gymnasium, stable-baselines3, sb3-contrib, pygame, tensorboard
-python -m unittest test_arena -v     # kiểm thử nhanh (không cần train)
-python test_core.py
+python -m unittest tests.test_arena -v     # kiểm thử nhanh (không cần train)
+python tests/test_core.py
 ```
 
 Python >= 3.10. Chỉ cần CPU. Chọn bàn bằng `--board 8x9` (hàng x cột, mặc định của nhóm) hoặc `--board 6x7`
@@ -90,9 +90,7 @@ python tournament.py --board 6x7 --levels 1-4 --mode all
 python tournament.py --board 6x7 --levels 1-8 --seeds 0,1,2,3 --games-per-seed 100 --mode default
 ```
 
-Kết quả: `results/tournament_<bàn>/{default,time}/` gồm `config.json` (cấu hình + phần cứng), `games.jsonl` (log thô từng ván: nước đi,
-ms/nước, số nút, số mô phỏng), `pairs/` (từng cặp; **chạy lại lệnh sẽ tự bỏ qua các cặp đã xong**, thêm `--no-resume` để làm lại),
-`summary.json`, `summary.md` (xếp hạng, thắng/hòa/thua, score + Wilson 95% + bootstrap 95%, theo bên đi trước/sau và theo seed, ms/nước TB/p95/max, nút, mô phỏng).
+Kết quả: một thư mục `results/runs/<mã-thí-nghiệm>/` cho mỗi chế độ (cấu trúc ở **mục 5**) và một dòng trong nhật ký Excel; xem thêm `summary.md` (xếp hạng, thắng/hòa/thua, score + Wilson 95% + bootstrap 95%, theo bên đi trước/sau và theo seed, ms/nước TB/p95/max, nút, mô phỏng).
 
 Thiết kế: mỗi khai cuộc (4 nước ngẫu nhiên) chơi **hai lần đổi bên** (cân bằng lượt đi); khai cuộc theo seed, dùng chung mọi cặp;
 seed từng ván suy ra từ (seed, cặp, ván); chạy tuần tự trong một tiến trình để đo thời gian ít nhiễu.
@@ -107,7 +105,7 @@ python run_ablation.py --board 6x7 --only A1,A2          # không cần train: �
 python run_ablation.py --board 6x7 --only B1,B2,B3       # sau khi train: shield/flip (cấp 5, 6), tìm kiếm lai, số mô phỏng AlphaZero
 ```
 
-Mỗi biến thể đấu >= 100 ván (2 seed x 50) với một đối thủ neo cố định; kết quả `results/ablation_<bàn>/<id>.{json,md}`.
+Mỗi biến thể đấu >= 100 ván (2 seed x 50) với một đối thủ neo cố định; kết quả trong `results/runs/<mã>/` (mục 5) và sheet **Ablation** của nhật ký.
 **Ablation cần đúng cỡ bàn đã train** (B1-B3).
 
 ## 4. Đưa vào báo cáo
@@ -117,3 +115,45 @@ Mỗi biến thể đấu >= 100 ván (2 seed x 50) với một đối thủ neo
   (`train_levels.py`, `mcts.py`, `c4env.py`); AlphaZero ở đây là phiên bản **"lấy cảm hứng"** (MLP nhỏ, tự chơi quy mô nhỏ) - phải ghi đúng như vậy.
 * **Hạn chế cần nêu:** model train 10.000 bước rất nhỏ; bàn 8x9 khác bàn khuyến nghị 7x6 (cần giảng viên duyệt);
   số đo thời gian phụ thuộc phần cứng; khai cuộc ngẫu nhiên 4 nước có thể tạo thế thắng cưỡng bức cho một bên (đổi bên bù trừ).
+
+## 5. Thư mục kết quả + Nhật ký thí nghiệm (Excel / Google Sheets)
+
+Mỗi lần chạy `tournament.py`, `run_ablation.py` hoặc `train_levels.py` tạo **một thư mục** `results/runs/<mã-thí-nghiệm>/`
+(mã = `ngày-giờ_loại_bàn_nhãn`) và **thêm một dòng vào nhật ký** `results/NHAT_KY_THI_NGHIEM.xlsx`.
+
+| File trong thư mục lần chạy | Nội dung | Tương ứng trong thí nghiệm học máy |
+|---|---|---|
+| `app_cfg.json` | lệnh chạy, mục tiêu, giả thuyết, bàn, seed, số ván, ngân sách, thời gian, **mã băm code**, phần cứng/phiên bản thư viện | `app_cfg.json` |
+| `params_cfg.json` | tham số **thực** của từng tác tử (độ sâu, số mô phỏng, shield, ...; sha256 của model); với train: toàn bộ tham số train | `params_cfg.json` |
+| `run.log.txt` / `train.log.txt` | toàn bộ log console | `train.log.txt` |
+| `games_seed<k>.csv`, `games_all.csv` | log từng ván: cặp, khai cuộc, bên đi trước, kết quả, số nước, ms/nước, chuỗi nước đi | `train_logs_fold<k>.csv`, `train_logs_all.csv` |
+| `train_logs_level5.csv`, ... (lần train) | đường cong học | `train_logs_*.csv` |
+| `metrics_seed.csv` | số đo từng tác tử theo từng seed (W/D/L, score, Wilson, đi trước/sau, ms, p95, nút, mô phỏng) | `metrics_best.csv` |
+| `metrics_seed_mean.json` | trung bình ± độ lệch chuẩn qua các seed, score gộp + Wilson 95% | `metrics_best_mean.json` |
+| `metrics_pairs.csv` | từng cặp (gộp seed): W/D/L, score, Wilson, bootstrap | `metrics_avg.csv` |
+| `metrics_overall.json` | xếp hạng tổng + chi phí tính toán (lần train: val/test acc, sha256 model) | `metrics_avg_mean.json` |
+| `summary.md` | báo cáo đọc nhanh | |
+| `models/` | bản sao model đã dùng/được train (nếu < 60 MB) | `best_model_fold*.pt` |
+| `data/` | log thô `games.jsonl` (nước đi, ms, nút, mô phỏng), `pairs/` để chạy tiếp | `data/` |
+
+Chạy tiếp một tournament dở: `python tournament.py ... --resume results/runs/<mã>` (bỏ qua các cặp đã xong).
+
+### Điền nhật ký đúng cách (như sổ thí nghiệm khoa học)
+
+```bash
+python tournament.py --board 6x7 --levels 1-8 --seeds 0,1,2,3 --games-per-seed 100 --mode all \
+  --goal "So sánh 8 cấp ở cấu hình mặc định và cùng 100 ms/nước" \
+  --hypothesis "Điểm tăng theo cấp; AlphaZero-800 > AlphaZero-100; cấp 5 chưa vượt cấp 4 với 10.000 bước" \
+  --author "Trần Trọng Nghĩa" --tag baseline
+```
+
+* **Trước khi chạy:** viết `--goal` và `--hypothesis` (giả thuyết phải có trước khi thấy kết quả).
+* **Sau khi chạy:** mở `NHAT_KY_THI_NGHIEM.xlsx`, sheet **Nhật ký**, điền tay cột **Kết luận** (giả thuyết đúng/sai, vì sao, độ tin cậy dựa vào khoảng Wilson),
+  **Bất thường / ghi chú** và **Hành động tiếp theo**. Chạy lại cùng mã TN sẽ ghi đè các cột tự động nhưng **giữ nguyên phần bạn đã điền tay**.
+* Các sheet khác: **Kết quả cặp**, **Số đo theo tác tử**, **Ablation**, **Huấn luyện** (đều khóa bằng Mã TN), **Từ điển** (giải thích cột).
+* Cột **Mã băm code** + seed + `params_cfg.json` = đủ để tái lập; đổi code thì mã băm đổi.
+
+### Dùng Google Trang tính (Google Sheets)
+
+Chương trình ghi file `.xlsx` (chạy offline, không cần tài khoản). Để dùng trên Google Sheets: tải `NHAT_KY_THI_NGHIEM.xlsx` lên Google Drive →
+mở bằng Google Trang tính (hoặc Trang tính → Tệp → Nhập). Nếu nhiều người cùng ghi, hãy chạy trên một máy rồi chia sẻ file đó; **chương trình không tự đồng bộ lên Google Sheets**.

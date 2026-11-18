@@ -1,8 +1,12 @@
 """Kiểm thử lõi luật với kích thước bàn hiện tại (C4_ROWS x C4_COLS)."""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # thư mục gốc dự án
 import random, time
 import numpy as np
-from c4core import *
-import c4core
+from c4.core import *
+from c4 import core as c4core
 
 
 def brute_win(grid, s):

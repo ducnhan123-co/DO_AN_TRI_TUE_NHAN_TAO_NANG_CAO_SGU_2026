@@ -14,8 +14,9 @@ train_levels.py - Train các cấp độ cần học của thang 8 cấp (mỗi 
             khác nhau ở số mô phỏng MCTS lúc chơi (100 / 800).
 Cấp 5/7/8 lưu dạng .npz (chỉ mảng số, không pickle); cấp 6 là file zip của stable-baselines3.
 """
-import boardenv  # noqa: F401  (cỡ bàn: --board 6x7 | --rows/--cols | biến môi trường C4_ROWS/C4_COLS)
+from c4 import boardenv  # noqa: F401  (cỡ bàn: --board 6x7 | --rows/--cols | biến môi trường C4_ROWS/C4_COLS)
 
+from c4 import expio
 import argparse
 import csv
 import json
@@ -30,9 +31,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from c4core import COLS, ROWS, drop_bit, encode, has_won, is_full, minimax_scores
-from levels import BASE_DIR, LEVEL_NAMES, level_dir, level_file
-from mcts import AZSearch, NpPV
+from c4.core import COLS, ROWS, drop_bit, encode, has_won, is_full, minimax_scores
+from c4.levels import BASE_DIR, LEVEL_NAMES, level_dir, level_file
+from c4.mcts import AZSearch, NpPV
 
 
 # --------------------------------------------------------------------------- mạng
@@ -78,7 +79,7 @@ def log_row(name, row):
 
 # --------------------------------------------------------------------------- CẤP 5: học có giám sát
 def gen_sl_data(path, n_pos, depth, seed, deadline):
-    """Sinh dữ liệu: cho minimax (giáo viên) tự đấu với nhiễu; mỗi thế cờ gán nhãn = phân phối đều trên các nước
+    """Sinh dữ liệu: cho minimax tự đấu với nhiễu; mỗi thế cờ gán nhãn = phân phối đều trên các nước
     tốt nhất theo minimax độ sâu `depth`. Chạy nối tiếp được (ghi thêm vào file)."""
     X, Y, G = [], [], []
     if os.path.exists(path):
@@ -183,7 +184,7 @@ def train_sl(steps, data_path, out_path, batch=128, lr=2e-3, seed=0):
 def run_level5(a, deadline):
     os.makedirs(level_dir(), exist_ok=True)
     data = os.path.join(level_dir(), "sl_data.npz")
-    print(f"[cấp 5] {LEVEL_NAMES[5]}: dữ liệu {a.sl_positions} thế cờ (giáo viên minimax d{a.teacher_depth}), "
+    print(f"[cấp 5] {LEVEL_NAMES[5]}: dữ liệu {a.sl_positions} thế cờ (minimax d{a.teacher_depth}), "
           f"huấn luyện {a.steps} bước", flush=True)
     if not gen_sl_data(data, a.sl_positions, a.teacher_depth, a.seed, deadline):
         print("  -> chưa đủ dữ liệu, chạy lại lệnh để tiếp tục.")
@@ -203,7 +204,7 @@ def run_level6(a, deadline):
     n_envs = 10
     per = max(1, a.steps // n_envs)  # n_envs * n_steps = a.steps / số lần cập nhật
     n_steps = max(8, per // 10)
-    cmd = [sys.executable, os.path.join(BASE_DIR, "train_v2.py"), "--arch", "mlp", "--steps", str(a.steps), "--out", out,
+    cmd = [sys.executable, os.path.join(BASE_DIR, "tools", "train.py"), "--arch", "mlp", "--steps", str(a.steps), "--out", out,
            "--threads", "1", "--n-envs", str(n_envs), "--n-steps", str(n_steps),
            "--batch-size", str(n_envs * n_steps // 2), "--eval-every", str(a.steps), "--seed", str(a.seed)] + init
     subprocess.run(cmd, check=True, env=env, cwd=BASE_DIR)
@@ -364,31 +365,88 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--sl-positions", type=int, default=60_000, help="số thế cờ dữ liệu giám sát")
     ap.add_argument("--rl-scratch", action="store_true", help="cấp 6: khởi tạo ngẫu nhiên thay vì từ mạng cấp 5")
-    ap.add_argument("--teacher-depth", type=int, default=4, help="độ sâu minimax của giáo viên (cấp 5)")
+    ap.add_argument("--teacher-depth", type=int, default=4, help="độ sâu minimax")
     ap.add_argument("--az-train-sims", type=int, default=64, help="số mô phỏng MCTS khi tự chơi (AlphaZero)")
     ap.add_argument("--az-games-per-iter", type=int, default=20)
     ap.add_argument("--az-steps-per-iter", type=int, default=100)
     ap.add_argument("--az-batch", type=int, default=128)
     ap.add_argument("--az-buffer", type=int, default=60_000)
     ap.add_argument("--az-lr", type=float, default=1e-3)
+    ap.add_argument("--goal", default="", help="MỤC TIÊU lần train (ghi vào nhật ký)")
+    ap.add_argument("--hypothesis", default="", help="GIẢ THUYẾT, viết trước khi xem kết quả")
+    ap.add_argument("--author", default="")
+    ap.add_argument("--notes", default="")
+    ap.add_argument("--tag", default="")
     a = ap.parse_args()
     torch.set_num_threads(1)
     deadline = time.time() + a.max_seconds if a.max_seconds else float("inf")
     lv = parse_levels(a.levels)
-    print(f"Bàn {ROWS}x{COLS} | cấp: {lv} | {a.steps} bước mỗi cấp cần học\n")
-    for n in lv:
-        if n <= 4:
-            print(f"[cấp {n}] {LEVEL_NAMES[n]}: không cần train.")
-    done = True
-    for tag, cond, fn in (("level5", 5 in lv, run_level5), ("level6", 6 in lv, run_level6),
-                          ("level7_8_alphazero", 7 in lv or 8 in lv, run_az)):
-        if not cond:
-            continue
-        t0 = time.time()
-        r = fn(a, deadline)
-        write_meta(tag, a, time.time() - t0, bool(r), r if isinstance(r, dict) else None)
-        done &= bool(r)
-    print("\nHOÀN TẤT." if done else "\nCHƯA XONG: chạy lại đúng lệnh này để tiếp tục.")
+    board = f"{ROWS}x{COLS}"
+    run_id = expio.new_run_id("train", board, "".join(map(str, lv)) + (f"_{a.tag}" if a.tag else ""))
+    run_dir = expio.make_run_dir(run_id)
+    started, t_run = expio.now(), time.time()
+    done, infos, secs = True, {}, {}
+    with expio.Tee(os.path.join(run_dir, "train.log.txt")):
+        print(f"=== {run_id} -> {os.path.relpath(run_dir, BASE_DIR)}")
+        print(f"Bàn {ROWS}x{COLS} | cấp: {lv} | {a.steps} bước mỗi cấp cần học\n")
+        for n in lv:
+            if n <= 4:
+                print(f"[cấp {n}] {LEVEL_NAMES[n]}: không cần train.")
+        for tag, cond, fn in (("level5", 5 in lv, run_level5), ("level6", 6 in lv, run_level6),
+                              ("level7_8_alphazero", 7 in lv or 8 in lv, run_az)):
+            if not cond:
+                continue
+            t0 = time.time()
+            r = fn(a, deadline)
+            write_meta(tag, a, time.time() - t0, bool(r), r if isinstance(r, dict) else None)
+            infos[tag] = r if isinstance(r, dict) else {}
+            secs[tag] = time.time() - t0
+            done &= bool(r)
+        print("\nHOÀN TẤT." if done else "\nCHƯA XONG: chạy lại đúng lệnh này để tiếp tục.")
+        archive_run(run_dir, run_id, a, lv, board, started, time.time() - t_run, done, infos, secs)
+        print(f"Đã ghi nhật ký: {os.path.relpath(expio.JOURNAL, BASE_DIR)}")
+
+
+def archive_run(run_dir, run_id, a, lv, board, started, duration, done, infos, secs):
+    """Gom log/meta/model của lần train vào thư mục lần chạy + ghi nhật ký (Excel)."""
+    import shutil
+    d = level_dir()
+    files = {"level5": "level5_supervised.npz", "level6": "level6_rl.zip", "level7_8_alphazero": "level7_8_alphazero.npz"}
+    app_cfg = {"run_id": run_id, "kind": "train", "board": board, "rows": ROWS, "cols": COLS, "levels": lv, "seed": a.seed,
+               "command": ["python"] + sys.argv, "goal": a.goal, "hypothesis": a.hypothesis, "author": a.author,
+               "notes": a.notes, "started": started, "ended": expio.now(), "duration_s": round(duration, 1),
+               "complete": done, "code_hash": expio.code_hash(), "environment": hardware_info()}
+    expio.write_json(os.path.join(run_dir, "app_cfg.json"), app_cfg)
+    expio.write_json(os.path.join(run_dir, "params_cfg.json"), {k: v for k, v in vars(a).items()})
+    for f in os.listdir(d) if os.path.isdir(d) else []:
+        if f.startswith("train_log") and f.endswith(".csv"):  # train_log_level5.csv -> train_logs_level5.csv
+            shutil.copy2(os.path.join(d, f), os.path.join(run_dir, f.replace("train_log_", "train_logs_", 1)))
+        elif f.startswith("meta_") and f.endswith(".json"):
+            shutil.copy2(os.path.join(d, f), os.path.join(run_dir, f))
+    os.makedirs(os.path.join(run_dir, "models"), exist_ok=True)
+    rows, metrics = [], {}
+    for tag, info in infos.items():
+        mf = os.path.join(d, files[tag])
+        sha = expio.sha256_file(mf) if os.path.exists(mf) else ""
+        if os.path.exists(mf) and os.path.getsize(mf) < 60e6:
+            shutil.copy2(mf, os.path.join(run_dir, "models", os.path.basename(mf)))
+        metrics[tag] = {**info, "seconds": round(secs.get(tag, 0), 1), "model_sha256": sha}
+        lvl = {"level5": "5", "level6": "6", "level7_8_alphazero": "7-8"}[tag]
+        rows.append([run_id, lvl, a.seed, board, a.steps, round(secs.get(tag, 0) / 60, 2), info.get("val_acc", ""),
+                     info.get("test_acc", ""), "có" if done else "chưa", os.path.relpath(mf, BASE_DIR) if sha else "", sha])
+    expio.write_json(os.path.join(run_dir, "metrics_overall.json"), {"run_id": run_id, "kind": "train", "per_level": metrics})
+    summary = "; ".join(f"{t}: " + (f"VAL {m['val_acc']:.2%}, TEST {m['test_acc']:.2%}" if "val_acc" in m else f"{m['seconds']}s")
+                        for t, m in metrics.items())
+    expio.journal_write(
+        {"Mã TN": run_id, "Bắt đầu": started, "Thời lượng (phút)": round(duration / 60, 2), "Loại": "Huấn luyện",
+         "Người thực hiện": a.author, "Mục tiêu": a.goal, "Giả thuyết": a.hypothesis, "Bàn cờ": board,
+         "Đối tượng": "Cấp " + ",".join(map(str, lv)), "Ngân sách": f"{a.steps} bước/cấp", "Seeds": str(a.seed),
+         "Ván/cặp": "", "Khai cuộc (nước)": "", "Lệnh chạy": " ".join(app_cfg["command"]), "Mã băm code": app_cfg["code_hash"],
+         "Phần cứng": f"{app_cfg['environment']['cpu']} x{app_cfg['environment']['cpu_count']}"
+                      + (f" | GPU {app_cfg['environment']['gpu']}" if app_cfg["environment"].get("gpu") else ""),
+         "Thư mục kết quả": os.path.relpath(run_dir, BASE_DIR), "Kết quả chính (tự động)": summary,
+         "Bất thường / ghi chú": a.notes, "Trạng thái": "Hoàn tất" if done else "Dang dở"},
+        train_rows=rows)
 
 
 if __name__ == "__main__":

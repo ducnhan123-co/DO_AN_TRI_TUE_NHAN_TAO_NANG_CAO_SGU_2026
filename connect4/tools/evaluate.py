@@ -1,10 +1,14 @@
 """Đánh giá một model MaskablePPO với các đối thủ cố định.
-   python evaluate_v2.py models/agent_8x9.zip [--games 100]"""
+   python tools/evaluate_v2.py models/agent_8x9.zip [--games 100]"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # thư mục gốc dự án
 import argparse, warnings
 warnings.filterwarnings("ignore")
 import torch
-from c4core import *
-from c4env import TorchPlayer, check_board, load_model
+from c4.core import *
+from c4.env import TorchPlayer, check_board, load_model
 
 ap = argparse.ArgumentParser(); ap.add_argument("model"); ap.add_argument("--games", type=int, default=100)
 ap.add_argument("--search", type=int, default=0, help="chế độ lai: minimax độ sâu N loại nước tệ (0 = tắt)")

@@ -1,20 +1,26 @@
-"""Kiểm thử không cần torch/pygame thật:  python -m unittest test_arena -v   (hoặc python test_arena.py)"""
-import json
+"""Kiểm thử không cần torch/pygame thật:  python -m unittest tests.test_arena -v   (hoặc python -m tests.test_arena)"""
 import os
+import json
 import tempfile
 import time
 import unittest
 
-import fake_pygame as fp
+import tempfile as _tf
+
+os.environ["C4_JOURNAL"] = os.path.join(_tf.mkdtemp(), "nhat_ky.xlsx")  # không đụng nhật ký thật khi test
+
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+from tests import fake_pygame as fp
 
 fp.install()  # pygame giả (Pillow) - chỉ để kiểm tra luồng điều khiển của giao diện
 
-import arena  # noqa: E402
-import levels  # noqa: E402
+from c4 import arena  # noqa: E402
+from c4 import levels  # noqa: E402
 import tournament as T  # noqa: E402
-from c4core import COLS, ROWS, MinimaxPlayer, drop_bit, has_won  # noqa: E402
-from expstats import bootstrap_score_ci, percentile, wilson_interval  # noqa: E402
-from mcts import MCTSPlayer  # noqa: E402
+from c4.core import COLS, ROWS, MinimaxPlayer, drop_bit, has_won  # noqa: E402
+from c4.expstats import bootstrap_score_ci, percentile, wilson_interval  # noqa: E402
+from c4.mcts import MCTSPlayer  # noqa: E402
 
 
 class TestLevelsAndBudget(unittest.TestCase):
@@ -40,7 +46,7 @@ class TestLevelsAndBudget(unittest.TestCase):
         self.assertLess(time.perf_counter() - t0, 0.5)
         self.assertTrue(0 <= a < COLS)
         self.assertGreaterEqual(q.last_stats["depth"], 1)
-        self.assertIsNone(__import__("c4core")._DEADLINE[0])
+        self.assertIsNone(__import__("c4.core", fromlist=["x"])._DEADLINE[0])
 
     def test_mcts_time_limit_and_sims(self):
         p = MCTSPlayer(sims=10**9, seed=0, time_limit=0.03)
@@ -116,23 +122,35 @@ class TestSession(unittest.TestCase):
 
 class TestTournament(unittest.TestCase):
     def test_round_robin_small(self):
+        from c4 import expio
+        expio.JOURNAL = os.path.join(tempfile.mkdtemp(), "nk.xlsx")
         with tempfile.TemporaryDirectory() as d:
             T.run_round_robin([1, 2, 3], "default", [0], 4, 2, 0, d, progress=False)
-            s = json.load(open(os.path.join(d, "summary.json"), encoding="utf-8"))
-            self.assertEqual(len(s["pairs"]), 3)
-            self.assertEqual(sum(1 for _ in open(os.path.join(d, "games.jsonl"))), 12)
-            self.assertEqual(s["pairs"]["L1 vs L2"]["n"], 4)
+            s = json.load(open(os.path.join(d, "metrics_overall.json"), encoding="utf-8"))
+            self.assertEqual(len(s["per_agent"]), 3)
+            self.assertEqual(sum(1 for _ in open(os.path.join(d, "data", "games.jsonl"))), 12)
             self.assertIn("p95_ms", s["cost"]["L3"])
             self.assertGreater(s["cost"]["L3"]["mean_nodes"], 0)
+            for f in ("app_cfg.json", "params_cfg.json", "run.log.txt" if False else "summary.md", "games_all.csv",
+                      "games_seed0.csv", "metrics_seed.csv", "metrics_seed_mean.json", "metrics_pairs.csv"):
+                self.assertTrue(os.path.exists(os.path.join(d, f)), f)
+            cfg = json.load(open(os.path.join(d, "app_cfg.json"), encoding="utf-8"))
+            self.assertEqual(cfg["games_per_pair"], 4)
+            self.assertEqual(len(cfg["code_hash"]), 12)
+            # nhật ký Excel
+            import openpyxl
+            wb = openpyxl.load_workbook(expio.JOURNAL)
+            self.assertEqual(wb["Nhật ký"].max_row, 2)
+            self.assertEqual(wb["Kết quả cặp"].max_row, 4)
             # tiếp tục (resume) không chơi lại
             T.run_round_robin([1, 2, 3], "default", [0], 4, 2, 0, d, progress=False)
-            self.assertEqual(sum(1 for _ in open(os.path.join(d, "games.jsonl"))), 12)
+            self.assertEqual(sum(1 for _ in open(os.path.join(d, "data", "games.jsonl"))), 12)
 
     def test_reproducible(self):
         def run():
             with tempfile.TemporaryDirectory() as d:
                 T.run_round_robin([2, 3], "default", [0], 4, 2, 0, d, progress=False)
-                return [json.loads(l)["moves"] for l in open(os.path.join(d, "games.jsonl"))]
+                return [json.loads(l)["moves"] for l in open(os.path.join(d, "data", "games.jsonl"))]
         self.assertEqual(run(), run())
 
     def test_side_balance_and_paired_openings(self):
@@ -140,9 +158,40 @@ class TestTournament(unittest.TestCase):
         self.assertEqual(len(ops), 5)
         with tempfile.TemporaryDirectory() as d:
             T.run_round_robin([2, 3], "default", [0], 4, 2, 0, d, progress=False)
-            recs = [json.loads(l) for l in open(os.path.join(d, "games.jsonl"))]
+            recs = [json.loads(l) for l in open(os.path.join(d, "data", "games.jsonl"))]
             self.assertEqual(sorted(r["a_player"] for r in recs), [1, 1, 2, 2])
             self.assertEqual(recs[0]["opening"], recs[1]["opening"])
+
+
+class TestJournal(unittest.TestCase):
+    def test_rerun_replaces_row_and_keeps_manual_conclusion(self):
+        from c4 import expio
+        import openpyxl
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "j.xlsx")
+            row = {"Mã TN": "X1", "Loại": "t", "Kết quả chính (tự động)": "a"}
+            expio.journal_write(row, path=p)
+            wb = openpyxl.load_workbook(p)
+            wb["Nhật ký"].cell(2, 19).value = "kết luận của người"
+            wb.save(p)
+            expio.journal_write({**row, "Kết quả chính (tự động)": "b"}, path=p)
+            expio.journal_write({"Mã TN": "X2"}, path=p)
+            ws = openpyxl.load_workbook(p)["Nhật ký"]
+            self.assertEqual(ws.max_row, 3)
+            vals = {ws.cell(r, 1).value: (ws.cell(r, 18).value, ws.cell(r, 19).value) for r in (2, 3)}
+            self.assertEqual(vals["X1"], ("b", "kết luận của người"))
+            self.assertEqual(openpyxl.load_workbook(p).sheetnames[-1], "Từ điển")
+
+    def test_metrics_helpers(self):
+        from c4 import expio
+        recs = [{"seed": s, "game": g, "a": "A", "b": "B", "a_player": 1, "opening": [], "winner": 1, "a_outcome": 1.0,
+                 "plies": 7, "moves": [3], "log": [(1, 3, 0.001, 5, 0), (2, 2, 0.002, 0, 9)]} for s in (0, 1) for g in range(2)]
+        ms = expio.per_seed_metrics(recs, True)
+        self.assertEqual(len(ms), 4)
+        self.assertEqual([r["score"] for r in ms if r["agent"] == "A"], [1.0, 1.0])
+        sm = expio.seed_mean(ms)
+        self.assertEqual(sm["B"]["score_mean"], 0.0)
+        self.assertEqual(sm["A"]["games"], 4)
 
 
 class TestGUI(unittest.TestCase):
@@ -155,7 +204,7 @@ class TestGUI(unittest.TestCase):
         raise KeyError(bid)
 
     def test_menu_to_game_records_and_results(self):
-        import gui
+        from c4 import gui
         with tempfile.TemporaryDirectory() as d:
             app = gui.ArenaApp(headless=True)
             app.rec = arena.Recorder(d)
@@ -183,7 +232,7 @@ class TestGUI(unittest.TestCase):
             self.assertIn("summary.csv", app.msg)
 
     def test_human_click_flow(self):
-        import gui
+        from c4 import gui
         with tempfile.TemporaryDirectory() as d:
             app = gui.ArenaApp(headless=True)
             app.rec = arena.Recorder(d)

@@ -12,7 +12,7 @@ import time
 import pygame  
 import pygame.gfxdraw  
 
-from c4core import COLS, H, ROWS, TacticalPlayer, bb_to_grid, drop_bit, has_won, is_full  
+from c4.core import COLS, H, ROWS, TacticalPlayer, bb_to_grid, drop_bit, has_won, is_full  
 
 # ---------------------------------------------------------------- màu sắc
 BG, PANEL, BORDER = (15, 19, 38), (26, 32, 56), (46, 54, 88)
@@ -352,8 +352,8 @@ class ArenaApp:
     W = 760
 
     def __init__(self, state=None, cell=0, headless=False):
-        from arena import BOARD, Recorder
-        import levels
+        from c4.arena import BOARD, Recorder
+        from c4 import levels
         self.levels, self.BOARD, self.rec = levels, BOARD, Recorder()
         pygame.init()
         pygame.display.set_caption(f"Connect 4 - AI Strategy Arena (Bàn cờ {BOARD})")
@@ -408,7 +408,7 @@ class ArenaApp:
 
     # ------------------------------------------------------------ mô tả lựa chọn
     def _spec(self, which):
-        from arena import PlayerSpec, budget_params
+        from c4.arena import PlayerSpec, budget_params
         v = self.st[which]
         if v == 0:
             return PlayerSpec("human")
@@ -447,7 +447,7 @@ class ArenaApp:
         self._button(pygame.Rect(self.PAD, y, bw, 46), "BẮT ĐẦU", "start", active=True, font=self.f_st, color=GREEN)
         self._button(pygame.Rect(self.PAD + bw + 16, y, bw, 46), f"KẾT QUẢ ĐÃ GHI ({n_rec} ván)", "results", font=self.f_st)
         self._text(f"Kết quả mỗi ván được ghi vào {os.path.relpath(self.rec.path)}", self.f_small, GRAY, (self.PAD, y + 54))
-        self._text("Cấp 5-8 bị khóa nếu chưa train (xem HUONG_DAN_TRAIN.md). Khai cuộc/số ván chỉ áp dụng khi máy-máy.",
+        self._text("Cấp 5-8 bị khóa nếu chưa train (xem docs/HUONG_DAN_TRAIN.md). Khai cuộc/số ván chỉ áp dụng khi máy-máy.",
                    self.f_small, GRAY, (self.PAD, y + 72))
         if self.msg:
             r = pygame.Rect(self.PAD, y + 94, self.W - 2 * self.PAD, 34)
@@ -460,7 +460,7 @@ class ArenaApp:
         if isinstance(bid, tuple):
             key, v = bid
             if v >= 1 and not self.levels.is_ready(v):
-                self.msg = f"Chưa train cấp {v} cho bàn {self.BOARD}: xem HUONG_DAN_TRAIN.md"
+                self.msg = f"Chưa train cấp {v} cho bàn {self.BOARD}: xem docs/HUONG_DAN_TRAIN.md"
                 return
             st[key] = v
         elif bid == "board":
@@ -481,7 +481,7 @@ class ArenaApp:
             self.start_session()
 
     def start_session(self):
-        from arena import Session
+        from c4.arena import Session
         a, b = self._spec("a"), self._spec("b")
         games = GAMES_OPTS[self.st["games"]] if (not a.is_human and not b.is_human) else 1
         try:

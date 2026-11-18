@@ -14,9 +14,9 @@ levels.py - Thang 8 cấp độ khó của AI Connect 4.
 """
 import os
 
-from c4core import COLS, ROWS, HeuristicPlayer, MinimaxPlayer, RandomPlayer
+from c4.core import COLS, ROWS, HeuristicPlayer, MinimaxPlayer, RandomPlayer
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # thư mục gốc dự án
 
 LEVEL_NAMES = {
     1: "Random",
@@ -67,21 +67,21 @@ def make_level(n, seed=None, **opts):
     if n == 3:
         return MinimaxPlayer(opts.get("depth", MINIMAX_DEPTH), seed=seed, time_limit=opts.get("time_limit"))
     if n == 4:
-        from mcts import MCTSPlayer
+        from c4.mcts import MCTSPlayer
         return MCTSPlayer(opts.get("sims", MCTS_SIMS), seed=seed, time_limit=opts.get("time_limit"))
     path = level_file(n)
     if not os.path.exists(path):
-        raise FileNotFoundError(f"Chưa train cấp {n} cho bàn {ROWS}x{COLS}: xem HUONG_DAN_TRAIN.md "
+        raise FileNotFoundError(f"Chưa train cấp {n} cho bàn {ROWS}x{COLS}: xem docs/HUONG_DAN_TRAIN.md "
                                 f"(thiếu {os.path.relpath(path, BASE_DIR)})")
     if n == 6:
-        from c4env import TorchPlayer, check_board, load_model
+        from c4.env import TorchPlayer, check_board, load_model
         key = ("rl", path)
         if key not in _cache:
             _cache[key] = check_board(load_model(path))
         return TorchPlayer(_cache[key].policy, deterministic=True, flip_avg=opts.get("flip_avg", True),
                            shield=opts.get("shield", True), search_depth=opts.get("search_depth", 0),
                            seed=seed, name="level6_rl")
-    from mcts import AZPlayer, NpPV, SupervisedPlayer
+    from c4.mcts import AZPlayer, NpPV, SupervisedPlayer
     key = ("np", path)
     if key not in _cache:
         _cache[key] = NpPV.load(path)
