@@ -38,7 +38,8 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # thư mục
 RUNS_DIR = os.path.join(BASE, "results", "runs")
 JOURNAL = os.environ.get("C4_JOURNAL") or os.path.join(BASE, "results", "NHAT_KY_THI_NGHIEM.xlsx")
 CODE_FILES = ("c4/core.py", "c4/mcts.py", "c4/levels.py", "c4/env.py", "c4/arena.py", "c4/expstats.py", "c4/expio.py",
-              "tournament.py", "run_ablation.py", "train_levels.py", "tools/train_v2.py")
+              "c4/elo.py", "c4/agent_eval.py", "c4/aggregate.py", "tournament.py", "run_ablation.py", "train_levels.py",
+              "tools/train.py", "tools/evaluate.py", "tools/ablation_agent.py")
 
 
 # ----------------------------------------------------------------------------- tiện ích

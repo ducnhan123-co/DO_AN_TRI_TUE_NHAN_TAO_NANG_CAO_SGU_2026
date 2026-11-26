@@ -2,7 +2,7 @@
 arena.py - Lõi "đấu trường" cho giao diện: chọn người chơi cho từng bên, chạy ván/loạt ván, GHI KẾT QUẢ.
 
 Không phụ thuộc pygame/torch (chỉ torch khi nạp cấp 6) nên kiểm thử được. Làm việc trực tiếp trên bitboard của
-c4core: mỗi người chơi có hàm act(me, opp) -> cột.
+c4.core: mỗi người chơi có hàm act(me, opp) -> cột.
 
 * PlayerSpec : "human" hoặc AI cấp 1-8 (+ tham số tuỳ chọn, xem levels.make_level).
 * Recorder   : ghi mỗi ván 1 dòng JSON vào results/play_log/games.jsonl; tổng hợp thắng/hòa/thua, điểm, Wilson 95%,
@@ -10,7 +10,7 @@ c4core: mỗi người chơi có hàm act(me, opp) -> cột.
 * Session    : một phiên chơi = hai bên A/B + loạt N ván. A/B cố định; ai đi trước tuỳ ván (đổi bên tự động
                nếu `alternate`). Khai cuộc ngẫu nhiên k nước, mỗi khai cuộc chơi 2 lần đổi bên (ghép cặp).
                AI tính trong luồng riêng nên giao diện không bị đơ.
-Bàn cờ (ROWS x COLS) cố định theo tiến trình (c4core đọc C4_ROWS/C4_COLS lúc import).
+Bàn cờ (ROWS x COLS) cố định theo tiến trình (c4.core đọc C4_ROWS/C4_COLS lúc import).
 """
 from __future__ import annotations
 

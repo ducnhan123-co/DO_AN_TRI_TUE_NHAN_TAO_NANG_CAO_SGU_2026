@@ -1,5 +1,5 @@
 """
-c4core.py - Luật Connect 4 bằng bitboard (thuần Python int) + các "người chơi" dùng chung.
+core.py - Luật Connect 4 bằng bitboard (thuần Python int) + các "người chơi" dùng chung.
 
 Quy ước
 -------

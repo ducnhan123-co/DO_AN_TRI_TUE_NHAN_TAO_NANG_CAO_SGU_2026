@@ -1,9 +1,9 @@
 """
-train_v2.py - Huấn luyện agent Connect 4 mạnh hơn.
+train.py - Huấn luyện agent Connect 4 mạnh hơn.
 
-Chạy thử nhanh :  python tools/train_v2.py --steps 200000 --out runs/quick
-Chạy đầy đủ    :  python tools/train_v2.py --steps 3000000 --arch cnn --channels 64 --out runs/main
-Tiếp tục       :  python tools/train_v2.py --steps 3000000 --out runs/main --resume runs/main/last.zip
+Chạy thử nhanh :  python tools/train.py --steps 200000 --out runs/quick
+Chạy đầy đủ    :  python tools/train.py --steps 3000000 --arch cnn --channels 64 --out runs/main
+Tiếp tục       :  python tools/train.py --steps 3000000 --out runs/main --resume runs/main/last.zip
 Xem log        :  tensorboard --logdir runs
 """
 from __future__ import annotations

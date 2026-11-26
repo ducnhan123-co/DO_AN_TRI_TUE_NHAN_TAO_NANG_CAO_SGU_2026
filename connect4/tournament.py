@@ -16,7 +16,7 @@ Thiết kế công bằng
 * Log thô từng ván (JSONL): nước đi, ms/nước, số nút (minimax), số mô phỏng (MCTS/AlphaZero).
 * Thống kê: thắng/hòa/thua, score, Wilson 95%, bootstrap 95%, theo bên đi trước/sau và theo seed, p95 độ trễ.
 """
-from c4 import boardenv  # noqa: F401  (phải đứng đầu: đặt kích thước bàn trước khi import c4core)
+from c4 import boardenv  # noqa: F401  (phải đứng đầu: đặt kích thước bàn trước khi import c4.core)
 
 import argparse
 import itertools
@@ -30,6 +30,7 @@ import time
 from c4 import expio
 from c4.arena import budget_params, timed_act
 from c4.core import COLS, ROWS, drop_bit, has_won, is_full, legal_cols
+from c4.elo import elo_from_pairs
 from c4.expstats import bootstrap_score_ci, mean, percentile, wilson_interval
 from c4.levels import BASE_DIR, LEVEL_NAMES, is_ready, make_level
 
@@ -206,7 +207,7 @@ def run_round_robin(levels, mode, seeds, games_per_seed, opening_plies, budget_m
                       f"Wilson[{s['wilson'][0]:.3f},{s['wilson'][1]:.3f}]  ({time.time() - t0:.0f}s)", flush=True)
     duration = time.time() - t0
     labels = [s[0] for s in specs]
-    md, ranking, cost, pair_json = build_summary(mode, budget_ms, seeds, games_per_seed, opening_plies, labels, results)
+    md, ranking, cost, pair_json, elo = build_summary(mode, budget_ms, seeds, games_per_seed, opening_plies, labels, results)
     app_cfg = {"run_id": run_id, "kind": "tournament", "mode": mode, "board": BOARD, "rows": ROWS, "cols": COLS,
                "levels": levels, "seeds": list(seeds), "games_per_seed": games_per_seed,
                "games_per_pair": games_per_seed * len(seeds), "opening_plies": opening_plies,
@@ -221,7 +222,7 @@ def run_round_robin(levels, mode, seeds, games_per_seed, opening_plies, budget_m
                   "score_A_second": round(s["score_as_second"], 4)} for k, s in pair_json.items()]
     records = expio.read_games(gpath)
     _, overall = expio.finalize(out_dir, run_id, "tournament", app_cfg, params, records, True, pair_rows,
-                                {"ranking": ranking, "cost": cost}, md)
+                                {"ranking": ranking, "cost": cost, "elo": {k: round(v, 1) for k, v in elo.items()}}, md)
     top = ", ".join(f"{l} ({sc:.2f})" for l, sc in ranking[:3])
     expio.journal_write(
         {"Mã TN": run_id, "Bắt đầu": started, "Thời lượng (phút)": round(duration / 60, 2), "Loại": f"Round-robin ({mode})",
@@ -252,12 +253,16 @@ def build_summary(mode, budget_ms, seeds, games_per_seed, opening_plies, labels,
         total[lb][1] += s["n"]
     ranking = sorted(((l, total[l][0] / total[l][1] if total[l][1] else float("nan")) for l in labels), key=lambda x: -x[1])
     cost = agent_cost(all_cost)
+    # Elo tương đối Bradley–Terry (hòa = nửa thắng, 1 ván hòa ảo/cặp; Random = 0 nếu có mặt) - mục 4.3 báo cáo
+    pair_pts = {tuple(k.split(" vs ")): (s["score"] * s["n"], s["n"]) for k, s in pair_json.items()}
+    elo = elo_from_pairs(pair_pts, labels, anchor="L1" if "L1" in labels else None) if pair_pts else {}
     md = [f"# Round-robin ({mode}) - bàn {BOARD}", "",
           f"Mỗi cặp {games_per_seed * len(seeds)} ván ({len(seeds)} seed x {games_per_seed}), khai cuộc {opening_plies} nước, đổi bên. "
           + (f"Ngân sách {budget_ms} ms/nước." if mode == "time" else ""),
-          "", "## Xếp hạng (điểm TB so với mọi cấp khác)", "", "| Hạng | Cấp | Điểm TB |", "|---|---|---|"]
+          "", "## Xếp hạng (điểm TB so với mọi cấp khác)", "", "| Hạng | Cấp | Điểm TB | Elo tương đối (Bradley–Terry) |",
+          "|---|---|---|---|"]
     for r, (l, sc) in enumerate(ranking, 1):
-        md.append(f"| {r} | {l} {LEVEL_NAMES[int(l[1:])]} | {sc:.3f} |")
+        md.append(f"| {r} | {l} {LEVEL_NAMES[int(l[1:])]} | {sc:.3f} | {elo.get(l, float('nan')):.0f} |")
     md += ["", "## Kết quả từng cặp (góc nhìn A)", "",
            "| A vs B | W/D/L | Score | Wilson 95% | Bootstrap 95% | Đi trước | Đi sau |", "|---|---|---|---|---|---|---|"]
     for k, s in pair_json.items():
@@ -268,12 +273,12 @@ def build_summary(mode, budget_ms, seeds, games_per_seed, opening_plies, labels,
         c = cost.get(l)
         if c:
             md.append(f"| {l} | {c['moves']} | {c['mean_ms']:.2f} | {c['p95_ms']:.2f} | {c['max_ms']:.2f} | {c['mean_nodes']:.0f} | {c['mean_sims']:.0f} |")
-    return "\n".join(md) + "\n", ranking, cost, pair_json
+    return "\n".join(md) + "\n", ranking, cost, pair_json, elo
 
 
 def main():
     ap = argparse.ArgumentParser(description="Round-robin các cấp Connect 4 (đề cuối kỳ mục 3.5)")
-    ap.add_argument("--board", default=None, help="vd 6x7 hoặc 8x9 (hàng x cột); mặc định theo c4core")
+    ap.add_argument("--board", default=None, help="vd 6x7 hoặc 8x9 (hàng x cột); mặc định theo c4.core")
     ap.add_argument("--rows", type=int, default=None)
     ap.add_argument("--cols", type=int, default=None)
     ap.add_argument("--levels", default="1-8")

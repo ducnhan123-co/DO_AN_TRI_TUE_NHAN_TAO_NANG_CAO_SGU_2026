@@ -8,19 +8,6 @@ Trò chơi **Connect 4 (Bốn quân thẳng hàng)** trên bàn **8 hàng × 9 c
   <img src="docs/screenshot_ai_vs_ai.png" width="330" alt="AI vs AI">
 </p>
 
-> ## ⚠️ Bản đã chỉnh (giao diện có menu + ghi kết quả + thí nghiệm theo đề cuối kỳ)
->
-> * `python play.py` mở **giao diện có MENU chọn chế độ ngay trong cửa sổ** (Người / cấp 1-8 cho từng bên, bàn cờ, ai đi trước,
->   số ván, khai cuộc, thời gian/nước) và **ghi kết quả mọi ván** vào `results/play_log/games.jsonl` (màn "Kết quả" có thống kê + xuất CSV). Code: `arena.py`, `gui.py` (`ArenaApp`).
-> * **Thí nghiệm theo đề:** `tournament.py` (round-robin, >=100 ván/cặp, khai cuộc ghép cặp đổi bên, Wilson/bootstrap, p95, nút/mô phỏng, 2 chế độ ngân sách)
->   và `run_ablation.py` (ablation).
-> * **Không kèm model huấn luyện sẵn** (đã bỏ `models/*.zip` và `levels/8x9/*`). Cấp 5-8 bị khóa tới khi bạn train: xem **[HUONG_DAN_TRAIN.md](docs/HUONG_DAN_TRAIN.md)**.
-> * Thay đổi nhỏ ở lõi: `c4core.py` (đếm nút, minimax đào sâu theo thời gian), `mcts.py`/`levels.py` (giới hạn thời gian, tham số ablation),
->   `train_levels.py` (tách train/val/test theo ván, `meta_*.json`).
-> * Các số liệu ở mục 9 và `results/*.csv` là của **các model cũ do nhóm train trước đây** (không còn kèm trong bản này).
-> * **Lưu kết quả thí nghiệm:** mỗi lần chạy tạo thư mục `results/runs/<mã>/` (app_cfg.json, params_cfg.json, log, CSV theo seed, metrics, model, data/) và ghi **nhật ký thí nghiệm** vào `results/NHAT_KY_THI_NGHIEM.xlsx` (mở bằng Excel hoặc tải lên Google Sheets) - xem mục 5 của docs/HUONG_DAN_TRAIN.md. Code: `c4/expio.py`.
-> * Kiểm thử mới: `python -m unittest tests.test_arena -v` (không cần torch/pygame thật).
-
 ## Mục lục
 
 1. [Tính năng](#1-tính-năng)
@@ -64,9 +51,12 @@ connect4/
 │   ├── gui.py           #   giao diện pygame (App cũ + ArenaApp có menu)
 │   ├── expio.py         #   thư mục kết quả chuẩn + nhật ký Excel
 │   ├── expstats.py      #   Wilson, bootstrap, phân vị
+│   ├── elo.py           #   Elo tương đối Bradley–Terry (+ bootstrap)
+│   ├── agent_eval.py    #   đánh giá tác tử với đối thủ cố định + ablation biến thể (mask / gương / tìm kiếm lai)
+│   ├── aggregate.py     #   tổng hợp lợi thế đi trước / đi sau xuyên nhiều lần chạy
 │   └── boardenv.py      #   đặt cỡ bàn (--board/--rows/--cols) trước khi import core
-├── tools/               # công cụ phụ: train_v2.py (PPO), evaluate_v2.py, evaluate_levels.py
-├── tests/               # test_arena.py (không cần torch/pygame), test_core.py, test_regression.py (cần torch), fake_pygame.py
+├── tools/               # train.py (PPO), evaluate.py, evaluate_levels.py, ablation_agent.py, aggregate_runs.py, plot_results.py
+├── tests/               # test_arena.py (không cần torch/pygame), test_analysis.py (Elo/tổng hợp/vẽ hình, không cần torch), test_core.py, test_regression.py (cần torch), fake_pygame.py
 ├── docs/                # HUONG_DAN_TRAIN.md, CHANGELOG.md, ảnh chụp giao diện
 ├── levels/<RxC>/        # model cấp 5, 6, 7-8 do BẠN train (rỗng khi mới tải về)
 ├── models/              # (tuỳ chọn) model PPO tự train cho --mode agent
@@ -88,7 +78,7 @@ connect4/
 **Windows (PowerShell):**
 
 ```powershell
-cd connect4_v2
+cd connect4        # thư mục chứa play.py, train_levels.py, requirements.txt
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -97,7 +87,7 @@ pip install -r requirements.txt
 **Linux / macOS:**
 
 ```bash
-cd connect4_v2
+cd connect4        # thư mục chứa play.py, train_levels.py, requirements.txt
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -107,8 +97,13 @@ Kiểm tra cài đặt (mọi dòng phải báo OK / PASS):
 
 ```bash
 python tests/test_core.py          # luật bàn cờ + minimax (vài giây)
-python tests/test_regression.py    # model lưu/nạp, seed, biên cột... (16 kiểm thử)
+python tests/test_regression.py    # model lưu/nạp, seed, biên cột... (16 kiểm thử, cần torch)
+python tests/test_analysis.py      # Elo, đi trước/sau, ablation, vẽ hình (23 kiểm thử, không cần torch)
+python tests/test_arena.py         # phiên chơi, UI, cấp độ (16 kiểm thử)
 ```
+
+> **Mọi lệnh `python ...` trong README phải chạy TRONG thư mục `connect4/`** (nơi có `play.py`, `train_levels.py`, `tournament.py`). Nếu bạn đứng ở thư mục cha của dự án sẽ gặp lỗi `can't open file ... train_levels.py: No such file or directory`: hãy `cd connect4` trước.
+> Nếu thư mục `levels/8x9/` đã có trọng số dựng sẵn thì `test_no_pretrained_weights_shipped` và một test GUI trong `test_arena.py` sẽ FAIL (hai test này giả định chưa có model); đó là hành vi mong đợi, không phải lỗi luật cờ.
 
 ## 5. Chạy nhanh
 
@@ -178,6 +173,8 @@ Chơi: `python play.py --level 5` (hoặc menu mục 6). **Trong game bấm phí
 
 ### Train các cấp (10.000 bước mỗi cấp)
 
+> Chạy trong thư mục `connect4/` (xem mục 4). Mặc định của `train_levels.py` là 10.000 bước/cấp. Các trọng số kèm sẵn trong `levels/8x9/` được train với **50.000 bước** (xem `train_log_level5.csv`, `train_log_az.csv`), nên mạnh hơn bảng "Sức mạnh đo được" bên dưới (đo ở 10.000 bước). Muốn tái lập bảng đó: `python train_levels.py --steps 10000 --seed 0` (sẽ ghi đè trọng số trong `levels/8x9/`; hãy sao lưu trước).
+
 ```bash
 python train_levels.py                        # cấp 5, 6, 7(+8): 10.000 bước mỗi cấp
 python train_levels.py --levels 5             # chỉ một cấp
@@ -195,7 +192,7 @@ python train_levels.py --max-seconds 240      # chia nhỏ: chạy lại đúng 
 
 Máy 1 CPU: cấp 5 ~10 phút (chủ yếu sinh dữ liệu), cấp 6 ~15 giây, cấp 7-8 ~7 phút. Đo sức mạnh: `python tools/evaluate_levels.py --games 20`.
 
-### Sức mạnh đo được (bàn 8×9, 20 ván mỗi ô, điểm = thắng + 0,5·hoà)
+### Các giá trị đo được đo được (bàn 8×9, 20 ván mỗi ô, điểm = thắng + 0,5·hoà)
 
 | Cấp | vs Random | vs Minimax d2 | vs Minimax d4 | vs cấp dưới |
 |---|---|---|---|---|
@@ -239,25 +236,25 @@ Bảng điểm ở góc phải trên cùng cộng dồn trong suốt phiên chơ
 Chạy thử nhanh (vài phút trên CPU):
 
 ```bash
-python tools/train_v2.py --arch mlp --steps 400000 --out runs/quick
+python tools/train.py --arch mlp --steps 400000 --out runs/quick
 ```
 
 Huấn luyện đầy đủ (nên dùng máy mạnh):
 
 ```bash
-python tools/train_v2.py --arch cnn --channels 64 --steps 3000000 --out runs/main
+python tools/train.py --arch cnn --channels 64 --steps 3000000 --out runs/main
 ```
 
 Huấn luyện tiếp từ chỗ dừng (bể đối thủ được khôi phục từ `pool.pt`):
 
 ```bash
-python tools/train_v2.py --steps 1000000 --out runs/main --resume runs/main/last.zip
+python tools/train.py --steps 1000000 --out runs/main --resume runs/main/last.zip
 ```
 
 Khởi tạo model 8×9 từ model 6×7 (chuyển giao, chỉ hỗ trợ `--arch mlp`):
 
 ```bash
-python tools/train_v2.py --arch mlp --steps 2000000 --out runs/t89 --init-from models/agent_6x7.zip --init-board 6x7
+python tools/train.py --arch mlp --steps 2000000 --out runs/t89 --init-from models/agent_6x7.zip --init-board 6x7
 ```
 
 Theo dõi quá trình học:
@@ -266,7 +263,7 @@ Theo dõi quá trình học:
 tensorboard --logdir runs
 ```
 
-### Tham số của `train_v2.py`
+### Tham số của `train.py`
 
 | Tham số | Mặc định | Ý nghĩa |
 |---|---|---|
@@ -303,11 +300,49 @@ tensorboard --logdir runs
 ## 8. Đánh giá model
 
 ```bash
-python tools/evaluate_v2.py models/agent_8x9.zip --games 100 --save results/my_eval.csv
-python tools/evaluate_v2.py models/agent_8x9.zip --games 60 --search 4   # chế độ lai
+python tools/evaluate.py models/agent_8x9.zip --games 100 --save results/my_eval.csv
+python tools/evaluate.py models/agent_8x9.zip --games 60 --search 4   # chế độ lai
 ```
 
 Model đấu với Random, Tactical, Minimax độ sâu 2, 4, 6 (đổi bên luân phiên, mở đầu 2 nước ngẫu nhiên). Cột `--save` ghi CSV (nối thêm nếu file đã có).
+
+Tuỳ chọn thêm cho `tools/evaluate.py`:
+
+| Cờ | Ý nghĩa |
+|---|---|
+| `--no-mask` | ABLATION: tắt mask chiến thuật 1 nước (thắng ngay / chặn ngay / không tặng thắng) khi chơi |
+| `--no-flip` | ABLATION: tắt lấy trung bình với bản lật gương trái-phải |
+| `--opponents random,tactical,minimax6` | chọn đối thủ (`random`, `tactical`, `minimaxN` với N bất kỳ; `all` = 5 đối thủ mặc định) |
+| `--d6-games N` | số ván với Minimax độ sâu >= 6 (mặc định `max(20, games//3)`) |
+| `--opening-plies`, `--seed` | số nước khai cuộc ngẫu nhiên, seed |
+
+Kết quả in thêm khoảng Wilson 95% và điểm khi đi trước / đi sau; cột `variant` trong CSV ghi biến thể đã dùng.
+
+### 8.1. Ablation cho tác tử PPO chính (Bảng 4.4, Hình 4.5 của báo cáo)
+
+```bash
+python tools/ablation_agent.py models/agent_8x9.zip                       # đầy đủ / bỏ gương / bỏ mask / bỏ cả hai x Random, Tactical, Minimax d2, d4
+python tools/ablation_agent.py models/agent_8x9.zip --variants all --opponents all --games 100
+python tools/plot_results.py ablation-agent results/runs/<thư mục vừa chạy>
+```
+
+Kết quả: `results/runs/<mã>_ablation-agent/` gồm `ablation_agent.csv`, `summary.md` (bảng biến thể x đối thủ, kèm Wilson 95%), `app_cfg.json` (có sha256 của model).
+Ablation cho các cấp 5/6/7-8 vẫn dùng `run_ablation.py --only B1,B2,B3`.
+
+### 8.2. Elo, thống kê đi trước / đi sau, vẽ hình
+
+```bash
+python tournament.py --board 8x9 --levels 1-8 --mode default          # summary.md & metrics_overall.json đã có cột "Elo tương đối"
+python tools/aggregate_runs.py results/runs/*tournament*default* --elo   # RQ4: đi trước vs đi sau + Elo gộp (bootstrap) -> results/aggregate/
+python tools/plot_results.py all results/runs/<giải đấu>                 # ma trận điểm, Elo, độ trễ  -> <thư mục>/figures/
+python tools/plot_results.py train5                                      # loss + độ chính xác cấp 5 (levels/8x9/train_log_level5.csv)
+python tools/plot_results.py az                                          # loss policy/value AlphaZero
+python tools/plot_results.py ppo runs/main/eval_log.csv                  # điểm đánh giá PPO theo bước
+python tools/plot_results.py budget results/runs/<ablation A1,A2,B3>     # điểm theo ngân sách tìm kiếm
+```
+
+Elo: mô hình Bradley–Terry, hòa = nửa thắng, thêm 1 ván hòa ảo mỗi cặp (tránh vô cực), Random = 0 nên chỉ có ý nghĩa tương đối (`c4/elo.py`).
+Mọi hình lưu PNG 200 dpi. Log huấn luyện bị nối thêm khi chạy lại sẽ chỉ vẽ lần chạy cuối.
 
 ## 9. Kết quả
 
@@ -361,7 +396,7 @@ So với 16 agent cũ (không tiến bộ qua các thế hệ, thắng Tactical 
 
 **Chế độ lai (`--search N`).** Với mỗi nước đi, minimax độ sâu N chấm điểm mọi nước hợp lệ; các nước kém nước tốt nhất quá một ngưỡng nhỏ (tức dẫn tới thế thua cưỡng bức trong N nước) bị loại, rồi policy chọn trong số còn lại. Tắt mặc định để số liệu "AI thuần học tăng cường" vẫn so sánh được.
 
-**Lưu/nạp model an toàn.** File model không chứa hàm `lambda` (learning rate dùng số thực, `lr_schedule`/`clip_range` không được lưu) và lớp CNN nằm ở `c4env.py` nên model nạp được từ mọi nơi/phiên bản Python. Luôn nạp qua `c4env.load_model()`.
+**Lưu/nạp model an toàn.** File model không chứa hàm `lambda` (learning rate dùng số thực, `lr_schedule`/`clip_range` không được lưu) và lớp CNN nằm ở `env.py` nên model nạp được từ mọi nơi/phiên bản Python. Luôn nạp qua `c4.env.load_model()`.
 
 **Khi chơi,** AI chọn nước có xác suất cao nhất, trung bình hoá dự đoán của bàn cờ và bản lật gương trái-phải.
 
@@ -376,7 +411,7 @@ So với 16 agent cũ (không tiến bộ qua các thế hệ, thắng Tactical 
 | Cửa sổ quá cao, bị cắt | `python play.py --cell 44` |
 | Nút đổi bàn báo "Không tìm thấy" | Thiếu model của bàn kia trong `models/` |
 | Train chậm | Dùng `--arch mlp`, tăng `--threads`; CNN chậm hơn khoảng 4-5 lần trên CPU |
-| Model cũ (train trước bản này) nạp lỗi / segfault ở máy khác | Nạp bằng `c4env.load_model()` (ghi đè các hàm bị pickle), rồi `save_model()` để lưu lại bản sạch |
+| Model cũ (train trước bản này) nạp lỗi / segfault ở máy khác | Nạp bằng `c4.env.load_model()` (ghi đè các hàm bị pickle), rồi `save_model()` để lưu lại bản sạch |
 | `best.zip` kém hơn mong đợi sau khi đổi cấu hình đánh giá | Xoá `best_score.json` để chọn lại `best` theo cấu hình mới |
 | Đổi kích thước bàn bằng PowerShell | `$env:C4_ROWS=6; $env:C4_COLS=7` (đặt trước khi chạy lệnh) |
 

@@ -32,7 +32,7 @@ Từng cấp, theo thứ tự phụ thuộc (cấp 6 mặc định khởi tạo 
 | Cấp | Lệnh | Phương pháp |
 |---|---|---|
 | 5 | `python train_levels.py --levels 5` | sinh dữ liệu bằng minimax độ sâu 4 (`--teacher-depth`), học bắt chước; dữ liệu **tách train/val/test 80/10/10 theo ván**; chọn checkpoint theo VAL, TEST đo đúng 1 lần |
-| 6 | `python train_levels.py --levels 6` | MaskablePPO tự chơi với bể đối thủ (gọi `train_v2.py`); `--rl-scratch` để khởi tạo ngẫu nhiên thay vì từ cấp 5 |
+| 6 | `python train_levels.py --levels 6` | MaskablePPO tự chơi với bể đối thủ (gọi `train.py`); `--rl-scratch` để khởi tạo ngẫu nhiên thay vì từ cấp 5 |
 | 7-8 | `python train_levels.py --levels 7-8` | AlphaZero (tự chơi + PUCT); cấp 7 và 8 **dùng chung một mạng**, chỉ khác số mô phỏng lúc chơi (100/800) |
 
 Tham số hay dùng: `--steps N` (số bước mỗi cấp), `--seed S`, `--sl-positions N` (số thế cờ giám sát, mặc định 60.000),
@@ -112,7 +112,7 @@ Mỗi biến thể đấu >= 100 ván (2 seed x 50) với một đối thủ neo
 
 * **Tái lập:** ghi seed, lệnh đã chạy, `config.json`/`meta_*.json` (phần cứng, phiên bản Python/torch), commit của mã.
 * **Nguồn gốc:** cấp 1-4 và khung tournament/ablation/UI menu do nhóm tự làm; cấp 5-8 là cài đặt của nhóm
-  (`train_levels.py`, `mcts.py`, `c4env.py`); AlphaZero ở đây là phiên bản **"lấy cảm hứng"** (MLP nhỏ, tự chơi quy mô nhỏ) - phải ghi đúng như vậy.
+  (`train_levels.py`, `mcts.py`, `env.py`); AlphaZero ở đây là phiên bản **"lấy cảm hứng"** (MLP nhỏ, tự chơi quy mô nhỏ) - phải ghi đúng như vậy.
 * **Hạn chế cần nêu:** model train 10.000 bước rất nhỏ; bàn 8x9 khác bàn khuyến nghị 7x6 (cần giảng viên duyệt);
   số đo thời gian phụ thuộc phần cứng; khai cuộc ngẫu nhiên 4 nước có thể tạo thế thắng cưỡng bức cho một bên (đổi bên bù trừ).
 

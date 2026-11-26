@@ -6,7 +6,7 @@
     "rows": null,
     "cols": null,
     "levels": "all",
-    "steps": 50000,
+    "steps": 10000,
     "max_seconds": 0,
     "seed": 0,
     "sl_positions": 60000,
@@ -34,6 +34,6 @@
     "cuda": false,
     "gpu": null
   },
-  "total_seconds": 6689.8,
-  "date": "2026-11-18 20:25:34"
+  "total_seconds": 8209.7,
+  "date": "2026-11-26 10:30:13"
 }

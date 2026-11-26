@@ -1,6 +1,6 @@
-"""boardenv.py - đặt kích thước bàn từ --rows/--cols (hoặc --board 8x9 / 6x7) TRƯỚC khi import c4core.
+"""boardenv.py - đặt kích thước bàn từ --rows/--cols (hoặc --board 8x9 / 6x7) TRƯỚC khi import c4.core.
 
-c4core đọc C4_ROWS/C4_COLS ngay lúc import nên mọi script có tham số bàn phải `import boardenv` ở dòng đầu tiên.
+c4.core đọc C4_ROWS/C4_COLS ngay lúc import nên mọi script có tham số bàn phải `import boardenv` ở dòng đầu tiên.
 """
 import os
 import sys

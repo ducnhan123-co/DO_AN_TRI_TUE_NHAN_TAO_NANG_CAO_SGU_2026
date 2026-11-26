@@ -19,7 +19,7 @@ import sys
 
 
 
-from c4 import boardenv  # noqa: F401,E402  (đặt cỡ bàn từ --rows/--cols/--board TRƯỚC khi import c4core)
+from c4 import boardenv  # noqa: F401,E402  (đặt cỡ bàn từ --rows/--cols/--board TRƯỚC khi import c4.core)
 
 from c4.core import COLS, ROWS, MinimaxPlayer, RandomPlayer, TacticalPlayer  # noqa: E402
 

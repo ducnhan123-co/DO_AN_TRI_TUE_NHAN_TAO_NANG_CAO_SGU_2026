@@ -333,7 +333,7 @@ class App:
 
 # =============================================================================================================
 # ArenaApp - giao diện có MENU chọn chế độ ngay trong UI + ghi kết quả + màn hình thống kê.
-# Cùng phong cách với App ở trên; dùng arena.Session (bitboard của c4core) để chơi và ghi games.jsonl.
+# Cùng phong cách với App ở trên; dùng arena.Session (bitboard của c4.core) để chơi và ghi games.jsonl.
 # =============================================================================================================
 SHORT = {1: "1 Random", 2: "2 Heuristic", 3: "3 Minimax", 4: "4 MCTS", 5: "5 Giám sát", 6: "6 PPO", 7: "7 AZ-100", 8: "8 AZ-800"}
 GAMES_OPTS, OPEN_OPTS, BUDGET_OPTS = (1, 10, 50, 100, 200), (0, 2, 4), (0, 50, 100, 300)

@@ -75,7 +75,7 @@ def main():
                if isinstance(data.get(k), dict) and ":serialized:" in data[k]]
         check(f"zip không chứa hàm serialized {bad}", not bad)
         # nạp lại bằng tiến trình Python MỚI ở thư mục khác (mô phỏng máy/phiên bản khác)
-        code = ("import sys; sys.path.insert(0, %r); from c4env import load_model; "
+        code = ("import sys; sys.path.insert(0, %r); from c4.env import load_model; "
                 "m = load_model(%r); print('LOAD_OK', m.policy.action_net.out_features)" % (os.getcwd(), p))
         out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=tmp)
         check("nạp model trong tiến trình mới thành công", "LOAD_OK" in out.stdout)
