@@ -1,12 +1,17 @@
 """
-train_v2.py - Huấn luyện agent Connect 4 mạnh hơn.
+train.py - Huấn luyện agent Connect 4 mạnh hơn.
 
-Chạy thử nhanh :  python train_v2.py --steps 200000 --out runs/quick
-Chạy đầy đủ    :  python train_v2.py --steps 3000000 --arch cnn --channels 64 --out runs/main
-Tiếp tục       :  python train_v2.py --steps 3000000 --out runs/main --resume runs/main/last.zip
+Chạy thử nhanh :  python tools/train.py --steps 200000 --out runs/quick
+Chạy đầy đủ    :  python tools/train.py --steps 3000000 --arch cnn --channels 64 --out runs/main
+Tiếp tục       :  python tools/train.py --steps 3000000 --out runs/main --resume runs/main/last.zip
 Xem log        :  tensorboard --logdir runs
 """
 from __future__ import annotations
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # thư mục gốc dự án
 
 import argparse
 import json
@@ -20,8 +25,8 @@ from sb3_contrib import MaskablePPO
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-from c4core import ROWS, COLS, MinimaxPlayer, RandomPlayer, TacticalPlayer, match
-from c4env import C4Extractor, Connect4Env, OpponentMixture, TorchPlayer, load_model, save_model
+from c4.core import ROWS, COLS, MinimaxPlayer, RandomPlayer, TacticalPlayer, match
+from c4.env import C4Extractor, Connect4Env, OpponentMixture, TorchPlayer, load_model, save_model
 
 
 # --------------------------------------------------------------------------- callback

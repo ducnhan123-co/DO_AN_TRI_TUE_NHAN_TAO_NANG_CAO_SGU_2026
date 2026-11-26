@@ -12,10 +12,11 @@ from __future__ import annotations
 
 import math
 import random
+import time
 
 import numpy as np
 
-from c4core import (BOT, COLMASK, COLS, H, ROWS, _require_moves, drop_bit, encode, has_won, is_full,
+from c4.core import (BOT, COLMASK, COLS, H, ROWS, _require_moves, drop_bit, encode, has_won, is_full,
                     legal_mask, mirror_cols, safe_cols, sensible_mask, tactical_override)
 
 
@@ -57,14 +58,17 @@ class MCTSPlayer:
     """Cấp 4 - Monte Carlo Tree Search thuần: không dùng mạng, không dùng hàm đánh giá; chỉ dựa vào tỉ lệ thắng
     của các ván giả lập ngẫu nhiên. Ở gốc có kiểm tra thắng-ngay / chặn-ngay / tránh-tặng-thắng (rẻ)."""
 
-    def __init__(self, sims=800, c=1.2, seed=None):
-        self.sims, self.c = sims, c
+    def __init__(self, sims=800, c=1.2, seed=None, time_limit=None):
+        # time_limit (giây/nước): nếu đặt, dừng khi hết giờ (tối thiểu 1 mô phỏng); sims là trần số mô phỏng
+        self.sims, self.c, self.time_limit = sims, c, time_limit
         self.rnd = random.Random(seed).random
-        self.name = f"mcts{sims}"
+        self.name = f"mcts{sims}" if time_limit is None else f"mcts(t={time_limit * 1000:.0f}ms)"
+        self.last_stats = {}
 
     def act(self, me, opp):
         mask = me | opp
         cols = _require_moves(mask)
+        self.last_stats = {"nodes": 0, "sims": 0}
         o = tactical_override(me, opp)
         if o is not None:
             return o
@@ -73,7 +77,12 @@ class MCTSPlayer:
             return int(root_cols[0])
         root = _N(me, opp, None, -1, list(root_cols))
         rnd, c_uct = self.rnd, self.c
+        deadline = None if self.time_limit is None else time.perf_counter() + self.time_limit
+        done = 0
         for _ in range(self.sims):
+            if deadline is not None and done and time.perf_counter() > deadline:
+                break
+            done += 1
             node = root
             while not node.untried and node.kids and node.term is None:
                 lg = math.log(node.n)
@@ -101,6 +110,7 @@ class MCTSPlayer:
                 node.w += r
                 r = 1.0 - r
                 node = node.parent
+        self.last_stats = {"nodes": 0, "sims": done}
         return int(max(root.kids, key=lambda k: k.n).col)
 
 
@@ -186,8 +196,8 @@ class AZSearch:
         p = np.exp(z - z.max()) * allowed
         return _AZNode(me, opp, p / p.sum(), allowed), v
 
-    def run(self, me, opp, noise=False):
-        """Trả về (số lượt thăm của từng cột ở gốc, nút gốc)."""
+    def run(self, me, opp, noise=False, time_limit=None):
+        """Trả về (số lượt thăm của từng cột ở gốc, nút gốc). time_limit (giây): dừng khi hết giờ (tối thiểu 1 mô phỏng)."""
         root, _ = self._evaluate(me, opp)
         if noise:
             idx = np.flatnonzero(root.allowed)
@@ -196,7 +206,12 @@ class AZSearch:
                 P[idx] = (1 - self.eps) * P[idx] + self.eps * self.rng.dirichlet([self.alpha] * len(idx))
                 root.P = P
         c = self.c
+        deadline = None if time_limit is None else time.perf_counter() + time_limit
+        done = 0
         for _ in range(self.sims):
+            if deadline is not None and done and time.perf_counter() > deadline:
+                break
+            done += 1
             node, path = root, []
             while True:
                 tot = node.N.sum()
@@ -232,16 +247,19 @@ class AZSearch:
 class AZPlayer:
     """Cấp 7/8 - AlphaZero: cùng một mạng, khác nhau ở số mô phỏng MCTS lúc chơi."""
 
-    def __init__(self, net, sims=100, seed=None, name=None):
+    def __init__(self, net, sims=100, seed=None, name=None, time_limit=None, shield=True):
         self.search = AZSearch(net, sims, rng=np.random.default_rng(seed))
-        self.sims = sims
-        self.name = name or f"alphazero{sims}"
+        self.sims, self.time_limit, self.shield = sims, time_limit, shield
+        self.name = name or (f"alphazero{sims}" if time_limit is None else f"alphazero(t={time_limit * 1000:.0f}ms)")
+        self.last_stats = {}
 
     def act(self, me, opp):
         mask = me | opp
         _require_moves(mask)
-        allowed = sensible_mask(me, opp)
+        allowed = sensible_mask(me, opp) if self.shield else legal_mask(mask)
         if allowed.sum() == 1:
+            self.last_stats = {"nodes": 0, "sims": 0}
             return int(allowed.argmax())
-        N, root = self.search.run(me, opp, noise=False)
+        N, root = self.search.run(me, opp, noise=False, time_limit=self.time_limit)
+        self.last_stats = {"nodes": 0, "sims": int(N.sum())}
         return int((np.where(allowed, N, -1) + 1e-3 * root.P).argmax())

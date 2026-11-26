@@ -1,12 +1,16 @@
 """
 evaluate_levels.py - Đo sức mạnh thang 8 cấp độ.
 
-    python evaluate_levels.py                       # mặc định 20 ván mỗi phép đo
-    python evaluate_levels.py --games 40 --levels 3,4,8 --save results/levels_ladder.csv
+    python tools/evaluate_levels.py                       # mặc định 20 ván mỗi phép đo
+    python tools/evaluate_levels.py --games 40 --levels 3,4,8 --save results/levels_ladder.csv
 
 Mỗi cấp đấu với: Random, Minimax d2, Minimax d4 (mốc cố định) và với cấp ngay dưới nó (so sánh bậc thang).
 Điểm = (thắng + 0.5*hoà)/số ván, đổi bên luân phiên, 2 nước mở đầu ngẫu nhiên.
 """
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # thư mục gốc dự án
 import argparse
 import csv
 import os
@@ -15,8 +19,8 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-from c4core import COLS, ROWS, MinimaxPlayer, RandomPlayer, match
-from levels import LEVEL_NAMES, is_ready, make_level
+from c4.core import COLS, ROWS, MinimaxPlayer, RandomPlayer, match
+from c4.levels import LEVEL_NAMES, is_ready, make_level
 from train_levels import parse_levels
 
 

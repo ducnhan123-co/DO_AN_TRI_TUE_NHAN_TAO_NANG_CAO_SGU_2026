@@ -14,9 +14,9 @@ levels.py - Thang 8 cấp độ khó của AI Connect 4.
 """
 import os
 
-from c4core import COLS, ROWS, HeuristicPlayer, MinimaxPlayer, RandomPlayer
+from c4.core import COLS, ROWS, HeuristicPlayer, MinimaxPlayer, RandomPlayer
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # thư mục gốc dự án
 
 LEVEL_NAMES = {
     1: "Random",
@@ -49,36 +49,48 @@ def is_ready(n):
     return n not in NEEDS_TRAINING or os.path.exists(level_file(n))
 
 
-def make_level(n, seed=None):
-    """Tạo người chơi (có hàm act(me, opp)) cho cấp n. Ném FileNotFoundError nếu cấp cần train mà chưa có model."""
+def make_level(n, seed=None, **opts):
+    """Tạo người chơi (có hàm act(me, opp)) cho cấp n. Ném FileNotFoundError nếu cấp cần train mà chưa có model.
+
+    opts (tuỳ chọn, dùng cho thí nghiệm / ablation; bỏ trống = cấu hình mặc định của cấp):
+      cấp 3 : depth, time_limit(giây/nước)          cấp 4 : sims, time_limit
+      cấp 5 : shield, flip_avg                       cấp 6 : shield, flip_avg, search_depth
+      cấp 7/8 : sims, time_limit, shield
+    """
     if n not in LEVEL_NAMES:
         raise ValueError(f"Cấp độ phải từ 1 đến 8 (nhận {n})")
+    opts = dict(opts)
     if n == 1:
         return RandomPlayer(seed)
     if n == 2:
         return HeuristicPlayer(seed=seed)
     if n == 3:
-        return MinimaxPlayer(MINIMAX_DEPTH, seed=seed)
+        return MinimaxPlayer(opts.get("depth", MINIMAX_DEPTH), seed=seed, time_limit=opts.get("time_limit"))
     if n == 4:
-        from mcts import MCTSPlayer
-        return MCTSPlayer(MCTS_SIMS, seed=seed)
+        from c4.mcts import MCTSPlayer
+        return MCTSPlayer(opts.get("sims", MCTS_SIMS), seed=seed, time_limit=opts.get("time_limit"))
     path = level_file(n)
     if not os.path.exists(path):
-        raise FileNotFoundError(f"Chưa train cấp {n} cho bàn {ROWS}x{COLS}: chạy `python train_levels.py` "
+        raise FileNotFoundError(f"Chưa train cấp {n} cho bàn {ROWS}x{COLS}: xem docs/HUONG_DAN_TRAIN.md "
                                 f"(thiếu {os.path.relpath(path, BASE_DIR)})")
     if n == 6:
-        from c4env import TorchPlayer, check_board, load_model
+        from c4.env import TorchPlayer, check_board, load_model
         key = ("rl", path)
         if key not in _cache:
             _cache[key] = check_board(load_model(path))
-        return TorchPlayer(_cache[key].policy, deterministic=True, flip_avg=True, name="level6_rl")
-    from mcts import AZPlayer, NpPV, SupervisedPlayer
+        return TorchPlayer(_cache[key].policy, deterministic=True, flip_avg=opts.get("flip_avg", True),
+                           shield=opts.get("shield", True), search_depth=opts.get("search_depth", 0),
+                           seed=seed, name="level6_rl")
+    from c4.mcts import AZPlayer, NpPV, SupervisedPlayer
     key = ("np", path)
     if key not in _cache:
         _cache[key] = NpPV.load(path)
     if n == 5:
-        return SupervisedPlayer(_cache[key], name="level5_supervised")
-    return AZPlayer(_cache[key], sims=AZ_SIMS[n], seed=seed, name=f"level{n}_alphazero{AZ_SIMS[n]}")
+        return SupervisedPlayer(_cache[key], flip_avg=opts.get("flip_avg", True), shield=opts.get("shield", True),
+                                name="level5_supervised")
+    sims = opts.get("sims", AZ_SIMS[n])
+    return AZPlayer(_cache[key], sims=sims, seed=seed, name=f"level{n}_alphazero{sims}",
+                    time_limit=opts.get("time_limit"), shield=opts.get("shield", True))
 
 
 def describe(n):

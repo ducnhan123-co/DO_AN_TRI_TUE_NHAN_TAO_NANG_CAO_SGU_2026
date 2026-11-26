@@ -16,3 +16,5 @@ levels/*/sl_data.npz
 levels/*/az_buffer.npz
 levels/*/az_state.pt
 levels/*/rl_run/
+# Nhật ký ván chơi trong UI (sinh ra khi dùng)
+results/play_log/

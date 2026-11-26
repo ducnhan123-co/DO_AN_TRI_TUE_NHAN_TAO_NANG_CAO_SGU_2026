@@ -1,5 +1,5 @@
 """
-c4core.py - Luật Connect 4 bằng bitboard (thuần Python int) + các "người chơi" dùng chung.
+core.py - Luật Connect 4 bằng bitboard (thuần Python int) + các "người chơi" dùng chung.
 
 Quy ước
 -------
@@ -12,6 +12,7 @@ Quy ước
 from __future__ import annotations
 
 import os
+import time
 
 import numpy as np
 
@@ -185,7 +186,23 @@ def evaluate(me: int, opp: int) -> int:
     return s
 
 
+# --- hạ tầng đo lường cho thí nghiệm (không đổi kết quả tìm kiếm) -----------------------------------
+NODES = [0]          # bộ đếm nút của _negamax (đọc/đặt lại bằng minimax_nodes / reset_nodes)
+_DEADLINE = [None]   # hạn chót (time.perf_counter) cho minimax theo thời gian; None = không giới hạn
+
+
+class SearchTimeout(Exception):
+    """Hết thời gian trong lúc tìm kiếm (dùng cho chế độ ngân sách theo ms/nước)."""
+
+
+def reset_nodes() -> None:
+    NODES[0] = 0
+
+
 def _negamax(me: int, opp: int, depth: int, alpha: int, beta: int, ply: int) -> int:
+    NODES[0] += 1
+    if _DEADLINE[0] is not None and not NODES[0] & 1023 and time.perf_counter() > _DEADLINE[0]:
+        raise SearchTimeout
     mask = me | opp
     moves = []
     for c in COL_ORDER:
@@ -312,16 +329,43 @@ class HeuristicPlayer:
 
 
 class MinimaxPlayer:
-    def __init__(self, depth=4, eps=0.0, seed=None):
-        self.depth, self.eps = depth, eps
+    """Negamax + alpha-beta. `depth` cố định (mặc định), hoặc `time_limit` (giây/nước): đào sâu dần
+    (iterative deepening) tới khi hết giờ rồi dùng kết quả của độ sâu hoàn tất gần nhất."""
+
+    def __init__(self, depth=4, eps=0.0, seed=None, time_limit=None, max_depth=14):
+        self.depth, self.eps, self.time_limit, self.max_depth = depth, eps, time_limit, max_depth
         self.rng = np.random.default_rng(seed)
-        self.name = f"minimax{depth}"
+        self.name = f"minimax{depth}" if time_limit is None else f"minimax(t={time_limit * 1000:.0f}ms)"
+        self.last_depth = depth
+        self.last_stats = {}
 
     def act(self, me, opp):
+        reset_nodes()
         if self.eps and self.rng.random() < self.eps:
             cols = _require_moves(me | opp)
             return int(cols[self.rng.integers(len(cols))])
-        return minimax_move(me, opp, self.depth, self.rng)
+        if self.time_limit is None:
+            a = minimax_move(me, opp, self.depth, self.rng)
+            self.last_depth = self.depth
+        else:
+            a = self._timed(me, opp)
+        self.last_stats = {"nodes": NODES[0], "sims": 0, "depth": self.last_depth}
+        return a
+
+    def _timed(self, me, opp):
+        _require_moves(me | opp)
+        best = minimax_move(me, opp, 1, self.rng)  # luôn có nước dự phòng
+        self.last_depth = 1
+        _DEADLINE[0] = time.perf_counter() + self.time_limit
+        try:
+            for d in range(2, self.max_depth + 1):
+                best = minimax_move(me, opp, d, self.rng)
+                self.last_depth = d
+        except SearchTimeout:
+            pass
+        finally:
+            _DEADLINE[0] = None
+        return best
 
 
 class LegacyGridPlayer:

@@ -1,5 +1,5 @@
 """
-c4env.py - Môi trường huấn luyện Connect 4 (self-play + bể đối thủ) cho MaskablePPO.
+env.py - Môi trường huấn luyện Connect 4 (self-play + bể đối thủ) cho MaskablePPO.
 
 So với env cũ:
   * Quan sát TƯƠNG ĐỐI: kênh 0 = quân của mình, kênh 1 = quân đối thủ  (2xROWSxCOLS, float32).
@@ -20,7 +20,7 @@ import torch.nn as nn
 from gymnasium import spaces
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
-from c4core import (
+from c4.core import (
     COLS,
     ROWS,
     MinimaxPlayer,
@@ -41,7 +41,7 @@ from c4core import (
 
 
 # --------------------------------------------------------------------------- mạng CNN (để ở module cố định)
-# Lưu ý: class trong policy_kwargs được pickle THEO TÊN MODULE. Nếu để trong train_v2.py (chạy như __main__)
+# Lưu ý: class trong policy_kwargs được pickle THEO TÊN MODULE. Nếu để trong train.py (chạy như __main__)
 # thì file model chỉ nạp được khi chạy đúng script đó. Đặt ở đây => nạp được từ mọi nơi.
 class _Res(nn.Module):
     def __init__(self, c):
@@ -282,6 +282,6 @@ class Connect4Env(gym.Env):
         return self._obs(), 0.0, False, False, {}
 
     def render(self):
-        from c4core import bb_to_grid
+        from c4.core import bb_to_grid
         g = bb_to_grid(self.me, self.opp, 1)
         return "\n".join("".join(".XO"[v] for v in row) for row in g)
