@@ -173,7 +173,7 @@ Chơi: `python play.py --level 5` (hoặc menu mục 6). **Trong game bấm phí
 
 ### Train các cấp (10.000 bước mỗi cấp)
 
-> Chạy trong thư mục `connect4/` (xem mục 4). Mặc định của `train_levels.py` là 10.000 bước/cấp. Các trọng số kèm sẵn trong `levels/8x9/` được train với **50.000 bước** (xem `train_log_level5.csv`, `train_log_az.csv`), nên mạnh hơn bảng "Sức mạnh đo được" bên dưới (đo ở 10.000 bước). Muốn tái lập bảng đó: `python train_levels.py --steps 10000 --seed 0` (sẽ ghi đè trọng số trong `levels/8x9/`; hãy sao lưu trước).
+> Chạy trong thư mục `connect4/` (xem mục 4). Mặc định của `train_levels.py` là 10.000 bước/cấp. Các trọng số kèm sẵn trong `levels/8x9/` được train với **10.000 bước** (xem `train_log_level5.csv`, `train_log_az.csv`), nên mạnh hơn bảng "Sức mạnh đo được" bên dưới (đo ở 10.000 bước). Muốn tái lập bảng đó: `python train_levels.py --steps 10000 --seed 0` (sẽ ghi đè trọng số trong `levels/8x9/`; hãy sao lưu trước).
 
 ```bash
 python train_levels.py                        # cấp 5, 6, 7(+8): 10.000 bước mỗi cấp
@@ -192,25 +192,12 @@ python train_levels.py --max-seconds 240      # chia nhỏ: chạy lại đúng 
 
 Máy 1 CPU: cấp 5 ~10 phút (chủ yếu sinh dữ liệu), cấp 6 ~15 giây, cấp 7-8 ~7 phút. Đo sức mạnh: `python tools/evaluate_levels.py --games 20`.
 
-### Các giá trị đo được đo được (bàn 8×9, 20 ván mỗi ô, điểm = thắng + 0,5·hoà)
-
-| Cấp | vs Random | vs Minimax d2 | vs Minimax d4 | vs cấp dưới |
-|---|---|---|---|---|
-| 1 Random | 0,40 | 0,00 | 0,00 | - |
-| 2 Heuristic | 1,00 | 0,25 | 0,10 | 1,00 |
-| 3 Minimax | 1,00 | 0,50 | 0,45 | 0,85 |
-| 4 Monte Carlo | 1,00 | 0,75 | 0,70 | 0,60 |
-| 5 Học có giám sát | 1,00 | 0,50 | 0,17 | 0,10 |
-| 6 Học tăng cường | 1,00 | 0,25 | 0,15 | 0,45 |
-| 7 AlphaZero (100) | 1,00 | 0,55 | 0,25 | 0,75 |
-| 8 AlphaZero (800) | 1,00 | 0,65 | 0,25 | 0,90 |
-
 **Lưu ý quan trọng về thứ tự độ khó:**
 - Độ khó tăng đúng thứ tự từ cấp 1 đến 4 và từ cấp 6 đến 8. **Cấp 5-8 chưa mạnh hơn cấp 4** khi chỉ train 10.000 bước: phương pháp học cần nhiều dữ liệu/bước hơn nhiều so với tìm kiếm thuần. Cấp 5 đứng dưới cấp 4 (đối đầu 0,10).
 - Cấp 8 hơn cấp 7 rõ rệt (0,90 khi đối đầu) chỉ nhờ tìm kiếm sâu hơn; cùng một mạng.
 - Cấp 5, 6, 7, 8 dùng "mask 1 nước" (thắng ngay / chặn ngay / không tặng thắng) như agent PPO ở mục 10. Tắt mask thì các cấp này yếu đi nhiều.
 - 20 ván mỗi ô nên sai số lớn (cấp 1 vs Random ra 0,40 thay vì 0,50 là do nhiễu).
-- Muốn các cấp học mạnh hơn: tăng `--steps` (ví dụ 50.000+), `--sl-positions`, `--az-train-sims`.
+- Muốn các cấp học mạnh hơn: tăng `--steps` (ví dụ 10.000+), `--sl-positions`, `--az-train-sims`.
 
 ## 6. Hướng dẫn chơi
 

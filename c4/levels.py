@@ -8,7 +8,7 @@ levels.py - Thang 8 cấp độ khó của AI Connect 4.
 | 3   | Minimax                              | không      | negamax + alpha-beta, độ sâu 3 |
 | 4   | Monte Carlo (MCTS thuần)             | không      | UCT + ván giả lập ngẫu nhiên, 4000 mô phỏng |
 | 5   | Học có giám sát                      | có         | mạng bắt chước minimax độ sâu 4 |
-| 6   | Học tăng cường                       | có         | MaskablePPO tự chơi |
+| 6   | Học tăng cường                       | có         | MaskablePPO chơi với bot cố định, khởi tạo từ cấp 5 (chưa tự chơi vì ngân sách < mốc chụp 25.000 bước) |
 | 7   | AlphaZero (100 mô phỏng MCTS)        | có         | mạng policy+value + MCTS PUCT |
 | 8   | AlphaZero (800 mô phỏng MCTS)        | có         | cùng mạng với cấp 7, tìm kiếm sâu hơn |
 """

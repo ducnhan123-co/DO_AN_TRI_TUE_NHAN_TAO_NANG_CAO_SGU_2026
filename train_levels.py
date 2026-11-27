@@ -9,7 +9,7 @@ train_levels.py - Train các cấp độ cần học của thang 8 cấp (mỗi 
 "Bước" được hiểu như sau (mỗi phương pháp một đơn vị riêng, nói rõ để so sánh công bằng):
   Cấp 1-4 : không cần train (luật / tìm kiếm thuần).
   Cấp 5   : 10.000 bước cập nhật gradient, học bắt chước minimax độ sâu 4 (dữ liệu sinh sẵn, tăng cường bằng lật gương).
-  Cấp 6   : 10.000 bước môi trường của MaskablePPO (tự chơi với bể đối thủ).
+  Cấp 6   : 10.000 bước môi trường của MaskablePPO chơi với bot cố định, khởi tạo từ cấp 5 (chưa tự chơi vì ngân sách < mốc chụp 25.000 bước).
   Cấp 7-8 : 10.000 bước cập nhật gradient của AlphaZero, xen kẽ tự chơi + MCTS; cấp 7 và 8 DÙNG CHUNG một mạng,
             khác nhau ở số mô phỏng MCTS lúc chơi (100 / 800).
 Cấp 5/7/8 lưu dạng .npz (chỉ mảng số, không pickle); cấp 6 là file zip của stable-baselines3.
